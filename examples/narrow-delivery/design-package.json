@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "brief_id": "narrow-delivery-v1",
+  "assumptions": [{"statement": "The corridor remains controlled during evaluation.", "status": "confirmed", "evidence": "DesignBrief operating_environment.people_access"}],
+  "system_architecture": {"reference": "ros2", "components": [{"name": "mission manager", "responsibility": "manage station deliveries"}, {"name": "navigation", "responsibility": "track a bounded route"}, {"name": "safety gate", "responsibility": "gate motion requests"}]},
+  "interfaces": [{"name": "bounded velocity request", "producer": "navigation", "consumer": "safety gate", "data": "linear and angular velocity", "units": "m/s and rad/s", "frame": "base frame", "failure_behavior": "expire to zero motion"}],
+  "algorithm_plan": [{"function": "route tracking", "choice": "global route planning with local clearance-aware tracking", "rationale": "Separates fixed route intent from short-horizon clearance response.", "prerequisites": ["measured footprint", "route clearance", "fresh observations"], "failure_behavior": "stop when route clearance cannot be established"}],
+  "hardware_functional_plan": [{"function": "clearance observation", "performance_requirements": ["cover the intended stopping envelope", "report freshness"], "interface": "timestamped observation stream", "environmental_requirements": ["indoor reflective surfaces"], "degradation": "reduce speed or stop on insufficient freshness"}],
+  "safety_plan": {"physical_output": "disabled_by_default", "control_authority": "all motion flows through one safety gate", "stop_behavior": "stale or unsafe requests resolve to zero motion", "watchdog": "motion expires without a fresh bounded request", "fault_recovery": "require reset and safe-state confirmation"},
+  "verification_plan": {"unit": "check clearance limits and request expiry", "integration": "use fake motion and observation transports", "simulation": "exercise narrow-route clearance faults", "replay": "compare synthetic blocked-corridor scenarios", "manual_safety_review": "approve trial procedure before hardware output"},
+  "open_decisions": ["Measure route clearance before physical trials."]
+}

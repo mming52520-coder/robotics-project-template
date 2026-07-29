@@ -1,0 +1,8 @@
+{
+  "id": "indoor-inspection",
+  "kind": "positive",
+  "language": "bilingual",
+  "skill_sequence": ["mobile-robot-system-design", "mobile-robot-navigation-planning", "mobile-robot-hardware-planning", "mobile-robot-control-safety", "mobile-robot-verification-plan"],
+  "fixtures": {"brief": "examples/indoor-inspection/design-brief.json", "package": "examples/indoor-inspection/design-package.json"},
+  "expected_outcome": {"required_sections": ["system_architecture", "algorithm_plan", "hardware_functional_plan", "safety_plan", "verification_plan"], "model_free": true}
+}

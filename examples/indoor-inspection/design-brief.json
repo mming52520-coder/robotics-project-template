@@ -1,0 +1,10 @@
+{
+  "schema_version": "v1",
+  "brief_id": "indoor-inspection-v1",
+  "mission": {"summary": "Repeat a bounded indoor inspection route and report progress to an operator."},
+  "operating_environment": {"type": "controlled_indoor", "floor": "level maintained floor", "people_access": "restricted during autonomous trials"},
+  "vehicle_constraints": {"kinematics": "differential_drive", "maximum_speed_mps": 0.4, "payload_kg": 3, "runtime_minutes": 150},
+  "required_capabilities": ["teleoperation", "route repeat", "localization", "diagnostics"],
+  "safety_context": {"emergency_stop": "defined", "speed_limit": "defined", "physical_output": "disabled"},
+  "blockers": []
+}

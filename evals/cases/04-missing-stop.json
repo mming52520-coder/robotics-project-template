@@ -1,0 +1,8 @@
+{
+  "id": "missing-stop",
+  "kind": "negative",
+  "language": "bilingual",
+  "skill_sequence": ["mobile-robot-control-safety"],
+  "input_summary": "The task omits emergency-stop behavior and a speed bound.",
+  "expected_outcome": {"must_block": true, "minimum_blockers": ["emergency_stop", "speed_limit"]}
+}

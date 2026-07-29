@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1",
+  "brief_id": "indoor-inspection-v1",
+  "assumptions": [{"statement": "The route is bounded and reviewed before simulation.", "status": "confirmed", "evidence": "DesignBrief mission.summary"}],
+  "system_architecture": {"reference": "ros2", "components": [{"name": "route manager", "responsibility": "sequence inspection goals"}, {"name": "localization", "responsibility": "publish pose uncertainty"}, {"name": "diagnostics", "responsibility": "report system health"}, {"name": "safety gate", "responsibility": "gate base requests"}]},
+  "interfaces": [{"name": "route progress", "producer": "route manager", "consumer": "operator interface", "data": "goal state and diagnostic summary", "units": "not applicable", "frame": "map frame", "failure_behavior": "report unknown progress and halt autonomous route"}],
+  "algorithm_plan": [{"function": "localization", "choice": "fuse bounded motion estimates with map observations", "rationale": "Maintains a measurable pose confidence for route repetition.", "prerequisites": ["frame calibration", "time synchronization", "map review"], "failure_behavior": "halt autonomous route on degraded localization"}],
+  "hardware_functional_plan": [{"function": "system health reporting", "performance_requirements": ["report compute, power, and observation freshness"], "interface": "timestamped diagnostic stream", "environmental_requirements": ["indoor operating range"], "degradation": "halt autonomous route when critical health is unavailable"}],
+  "safety_plan": {"physical_output": "disabled_by_default", "control_authority": "operator and route requests pass through one safety gate", "stop_behavior": "critical diagnostics and stale requests command zero motion", "watchdog": "the base interface expires stale requests", "fault_recovery": "require a documented reset before route continuation"},
+  "verification_plan": {"unit": "check diagnostic state transitions", "integration": "exercise fake diagnostic and base transports", "simulation": "run the route with degraded localization", "replay": "replay synthetic diagnostic loss", "manual_safety_review": "review physical procedure separately"},
+  "open_decisions": ["Define the operator progress display outside the motion-control boundary."]
+}

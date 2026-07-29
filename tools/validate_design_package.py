@@ -7,7 +7,10 @@ import argparse
 import json
 from pathlib import Path
 
-from design_contracts import validate_design_brief, validate_design_package
+try:
+    from .design_contracts import validate_design_brief, validate_design_package
+except ImportError:  # Direct script execution has no package context.
+    from design_contracts import validate_design_brief, validate_design_package
 
 
 def load_json(path: Path) -> object:

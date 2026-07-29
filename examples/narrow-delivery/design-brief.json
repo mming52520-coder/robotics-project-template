@@ -1,0 +1,10 @@
+{
+  "schema_version": "v1",
+  "brief_id": "narrow-delivery-v1",
+  "mission": {"summary": "Deliver small sealed loads between indoor stations through a narrow controlled corridor."},
+  "operating_environment": {"type": "controlled_indoor", "floor": "level floor with fixed boundaries", "people_access": "restricted during autonomous trials"},
+  "vehicle_constraints": {"kinematics": "differential_drive", "maximum_speed_mps": 0.3, "payload_kg": 8, "runtime_minutes": 120},
+  "required_capabilities": ["teleoperation", "localization", "narrow-route navigation", "obstacle_stop"],
+  "safety_context": {"emergency_stop": "defined", "speed_limit": "defined", "physical_output": "disabled"},
+  "blockers": []
+}
