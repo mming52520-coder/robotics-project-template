@@ -7,6 +7,13 @@ import re
 from pathlib import Path
 
 REQUIRED_UI_KEYS = ("display_name", "short_description", "default_prompt")
+REQUIRED_SKILLS = {
+    "mobile-robot-system-design",
+    "mobile-robot-navigation-planning",
+    "mobile-robot-hardware-planning",
+    "mobile-robot-control-safety",
+    "mobile-robot-verification-plan",
+}
 
 
 def _frontmatter(content: str) -> tuple[dict[str, str], str] | None:
@@ -27,7 +34,11 @@ def _frontmatter(content: str) -> tuple[dict[str, str], str] | None:
 def validate_skill_tree(root: Path) -> list[str]:
     """Return deterministic validation errors for every skill directory below root."""
     errors: list[str] = []
-    for skill_file in sorted(root.glob("*/SKILL.md")):
+    skill_files = sorted(root.glob("*/SKILL.md"))
+    found_skills = {skill_file.parent.name for skill_file in skill_files}
+    for required_skill in sorted(REQUIRED_SKILLS - found_skills):
+        errors.append(f"missing required skill: {required_skill}")
+    for skill_file in skill_files:
         skill_name = skill_file.parent.name
         parsed = _frontmatter(skill_file.read_text(encoding="utf-8"))
         if not parsed:

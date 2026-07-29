@@ -12,10 +12,15 @@ REQUIRED_PATHS = (
     ".agents/skills/README.md",
     "AGENTS.md",
     "LICENSE",
+    "contracts/design-brief.schema.json",
+    "contracts/design-package.schema.json",
+    "contracts/README.md",
     "config/example/system.yaml",
     "config/private/README.md",
     "docs/architecture/system-context.md",
     "docs/decisions/0000-template.md",
+    "docs/decisions/0001-model-free-design-package.md",
+    "docs/reference/indoor-wheeled-robot.md",
     "docs/work-memory/current.md",
     "experiments/experiment-template.md",
     "scripts/run-checks.sh",
@@ -23,6 +28,7 @@ REQUIRED_PATHS = (
     "tests/unit/README.md",
     "tests/integration/README.md",
     "tests/replay/README.md",
+    "evals/cases/01-warehouse-tote.json",
 )
 EXCLUDED_PARTS = {".git", ".venv", "__pycache__"}
 SECRET_PATTERNS = (

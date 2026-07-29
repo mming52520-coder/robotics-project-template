@@ -29,6 +29,9 @@ jobs:
       - name: Validate structure and safety defaults
         run: python tools/validate_template.py
 
+      - name: Validate design contracts and Skills
+        run: bash scripts/run-checks.sh
+
       - name: Check Python
         run: python -m ruff check tools
 

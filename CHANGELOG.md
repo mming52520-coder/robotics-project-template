@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0] - 2026-07-29
+
+### Added
+
+- Versioned DesignBrief and DesignPackage contracts for model-free indoor wheeled-robot design.
+- Five ROS 2 reference Skills for system design, navigation, hardware, safety, and verification.
+- Synthetic positive design packages, safety-blocking evaluation cases, and deterministic validators.
+- Public-content scanning for credentials and hardware-identifying fields.
+
 All notable changes follow semantic versioning.
 
 ## [Unreleased]

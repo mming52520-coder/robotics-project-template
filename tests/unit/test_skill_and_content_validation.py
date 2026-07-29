@@ -31,6 +31,12 @@ class SkillAndContentValidationTests(unittest.TestCase):
 
         self.assertIn("unsafe-skill: missing Safety and public boundary section", errors)
 
+    def test_missing_required_skill_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            errors = validate_skill_tree(Path(directory) / "skills")
+
+        self.assertIn("missing required skill: mobile-robot-system-design", errors)
+
     def test_content_scanner_rejects_sensitive_assignment(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             candidate = Path(directory) / "candidate.py"

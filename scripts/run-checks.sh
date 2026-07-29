@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ -d tests ]]; then
-  echo "Replace this placeholder with project-specific unit, integration, and replay checks."
-else
-  echo "tests directory is missing" >&2
-  exit 1
-fi
+python tools/validate_template.py
+python tools/validate_skills.py
+python tools/validate_evals.py
+python tools/validate_public_content.py
+python -m unittest discover -s tests/unit -p 'test_*.py'
