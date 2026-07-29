@@ -1,0 +1,84 @@
+{
+  "schema_version": "v1",
+  "brief_id": "warehouse-tote-v1",
+  "assumptions": [
+    {
+      "statement": "The trial area remains restricted while autonomous motion is evaluated.",
+      "status": "confirmed",
+      "evidence": "DesignBrief operating_environment.people_access"
+    },
+    {
+      "statement": "Map quality must be measured before autonomous trials.",
+      "status": "open"
+    }
+  ],
+  "system_architecture": {
+    "reference": "ros2",
+    "components": [
+      {"name": "mission manager", "responsibility": "accept station goals and report task state"},
+      {"name": "localization", "responsibility": "publish pose with uncertainty"},
+      {"name": "navigation", "responsibility": "plan and track a collision-aware route"},
+      {"name": "safety gate", "responsibility": "gate all motion before the base interface"}
+    ]
+  },
+  "interfaces": [
+    {
+      "name": "base velocity request",
+      "producer": "navigation",
+      "consumer": "safety gate",
+      "data": "linear and angular velocity",
+      "units": "m/s and rad/s",
+      "frame": "base frame",
+      "failure_behavior": "expire the request and command zero motion"
+    }
+  ],
+  "algorithm_plan": [
+    {
+      "function": "state estimation",
+      "choice": "fuse wheel motion and inertial motion with external map observations",
+      "rationale": "Supports bounded indoor routes while preserving an uncertainty signal.",
+      "prerequisites": ["time synchronization", "frame calibration", "replay data"],
+      "failure_behavior": "raise degraded-localization state and stop autonomous navigation"
+    },
+    {
+      "function": "navigation",
+      "choice": "global route planning plus local collision-aware tracking",
+      "rationale": "Separates route intent from short-horizon obstacle response.",
+      "prerequisites": ["validated map", "obstacle observations", "velocity limits"],
+      "failure_behavior": "stop and request operator intervention when no safe progress exists"
+    }
+  ],
+  "hardware_functional_plan": [
+    {
+      "function": "base motion feedback",
+      "performance_requirements": ["report wheel motion with timestamps", "report fault state"],
+      "interface": "isolated vehicle feedback interface",
+      "environmental_requirements": ["indoor dust and vibration tolerance"],
+      "degradation": "disable autonomous motion when feedback integrity is lost"
+    },
+    {
+      "function": "obstacle observation",
+      "performance_requirements": ["cover intended stopping envelope", "publish freshness and confidence"],
+      "interface": "timestamped observation stream",
+      "environmental_requirements": ["handle expected indoor lighting and reflective surfaces"],
+      "degradation": "reduce speed or stop when observation quality is insufficient"
+    }
+  ],
+  "safety_plan": {
+    "physical_output": "disabled_by_default",
+    "control_authority": "teleoperation, navigation, and recovery requests pass through one safety gate",
+    "stop_behavior": "stale commands, obstacle stop, emergency stop, and critical diagnostics command zero motion",
+    "watchdog": "the motion interface expires commands without a fresh bounded request",
+    "fault_recovery": "require a documented reset and a safe-state check before motion is re-enabled"
+  },
+  "verification_plan": {
+    "unit": "validate units, bounds, request expiry, and state transitions",
+    "integration": "exercise fake motion and observation transports",
+    "simulation": "run representative station routes with injected observation and localization faults",
+    "replay": "compare candidate behavior against timestamped synthetic scenarios",
+    "manual_safety_review": "review physical trial procedure before enabling any hardware output"
+  },
+  "open_decisions": [
+    "Confirm stopping distance from measured braking behavior before physical trials."
+  ]
+}

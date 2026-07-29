@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DesignBrief v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "brief_id",
+    "mission",
+    "operating_environment",
+    "vehicle_constraints",
+    "required_capabilities",
+    "safety_context",
+    "blockers"
+  ],
+  "properties": {
+    "schema_version": {"const": "v1"},
+    "brief_id": {"type": "string", "minLength": 1},
+    "mission": {"type": "object"},
+    "operating_environment": {"type": "object"},
+    "vehicle_constraints": {"type": "object"},
+    "required_capabilities": {"type": "array", "minItems": 1},
+    "safety_context": {"type": "object"},
+    "blockers": {"type": "array"}
+  }
+}

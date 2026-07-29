@@ -1,0 +1,30 @@
+{
+  "schema_version": "v1",
+  "brief_id": "warehouse-tote-v1",
+  "mission": {
+    "summary": "Move sealed totes between marked indoor stations in a controlled logistics area."
+  },
+  "operating_environment": {
+    "type": "controlled_indoor",
+    "floor": "level sealed floor",
+    "people_access": "restricted during autonomous trials"
+  },
+  "vehicle_constraints": {
+    "kinematics": "differential_drive",
+    "maximum_speed_mps": 0.6,
+    "payload_kg": 25,
+    "runtime_minutes": 180
+  },
+  "required_capabilities": [
+    "teleoperation",
+    "localization",
+    "point_to_point_navigation",
+    "obstacle_stop"
+  ],
+  "safety_context": {
+    "emergency_stop": "defined",
+    "speed_limit": "defined",
+    "physical_output": "disabled"
+  },
+  "blockers": []
+}
