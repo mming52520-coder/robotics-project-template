@@ -1,0 +1,11 @@
+project:
+  name: example-robot
+  environment: simulation
+
+interfaces:
+  command_topic: /example/cmd
+  state_topic: /example/state
+
+safety:
+  hardware_output_enabled: false
+  watchdog_enabled: true

@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-template:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install validation tools
+        run: python -m pip install --requirement requirements-dev.txt
+
+      - name: Validate structure and safety defaults
+        run: python tools/validate_template.py
+
+      - name: Check Python
+        run: python -m ruff check tools
+
+      - name: Check YAML
+        run: yamllint --config-file .yamllint.yaml .
+
+      - name: Check Markdown
+        run: pymarkdown --config .pymarkdown.json scan .
+
+      - name: Check shell
+        run: shellcheck scripts/*.sh
