@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Robot Navigation Planning"
+  short_description: "Plan indoor localization, navigation, and recovery safely."
+  default_prompt: "Use $mobile-robot-navigation-planning to plan navigation from my DesignBrief."

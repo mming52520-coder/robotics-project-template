@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Robot Control Safety"
+  short_description: "Define safe motion authority, stops, and fault handling."
+  default_prompt: "Use $mobile-robot-control-safety to define the motion safety plan."

@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-
 BRIEF_REQUIRED = (
     "schema_version",
     "brief_id",
@@ -98,7 +97,8 @@ def _model_free_errors(value: object, path: str = "") -> list[str]:
             key_text = str(key).lower()
             nested_path = f"{path}.{key}" if path else str(key)
             if key_text in MODEL_FREE_FIELDS:
-                errors.append(f"{nested_path.rsplit('.', 1)[0] if '.' in nested_path else path} must not contain {key}")
+                parent_path = nested_path.rsplit(".", 1)[0] if "." in nested_path else path
+                errors.append(f"{parent_path} must not contain {key}")
             errors.extend(_model_free_errors(nested_value, nested_path))
         return errors
     if _list(value):
@@ -161,7 +161,9 @@ def validate_design_package(package: object, brief: object) -> list[str]:
     if not _list(package["open_decisions"]):
         errors.append("open_decisions must be a list")
 
-    errors.extend(_model_free_errors(package["hardware_functional_plan"], "hardware_functional_plan"))
+    errors.extend(
+        _model_free_errors(package["hardware_functional_plan"], "hardware_functional_plan")
+    )
     safety_plan = package["safety_plan"]
     if _mapping(safety_plan):
         if safety_plan.get("physical_output") != "disabled_by_default":

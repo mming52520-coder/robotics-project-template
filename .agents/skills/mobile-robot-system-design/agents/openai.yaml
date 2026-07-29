@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Robot System Design"
+  short_description: "Turn an indoor robot brief into a ROS 2 system design."
+  default_prompt: "Use $mobile-robot-system-design to turn my DesignBrief into a system design."

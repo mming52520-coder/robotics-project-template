@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Robot Verification Plan"
+  short_description: "Build simulation-first evidence and acceptance plans."
+  default_prompt: "Use $mobile-robot-verification-plan to create a verification plan."

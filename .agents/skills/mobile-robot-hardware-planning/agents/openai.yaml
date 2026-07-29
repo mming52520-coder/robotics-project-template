@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Robot Hardware Planning"
+  short_description: "Specify model-free hardware functions and testable requirements."
+  default_prompt: "Use $mobile-robot-hardware-planning to make a model-free hardware plan."
