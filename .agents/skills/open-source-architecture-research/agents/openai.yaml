@@ -1,0 +1,4 @@
+interface:
+  display_name: "Open Source Architecture Research"
+  short_description: "Find and adapt high-signal open-source architectures."
+  default_prompt: "Use $open-source-architecture-research to research reference architectures for this project."

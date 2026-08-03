@@ -6,6 +6,11 @@ A public, model-free template for AI-assisted design of controlled indoor wheele
 
 The repository does not include product code, hardware drivers, product recommendations, real configuration, or permission to actuate physical hardware. Examples are synthetic and physical output is disabled by default.
 
+Before starting a new architecture, use `open-source-architecture-research` to inspect the current
+project and compare high-signal public references. The Skill records reproducible evidence; the AI
+then derives a separately reviewable architecture recommendation from that evidence. It does not
+clone code or choose products.
+
 ## Quick start / 快速开始
 
 1. Select **Use this template** on GitHub.
@@ -23,7 +28,7 @@ python tools/validate_design_package.py examples/warehouse-tote/design-brief.jso
 
 ```text
 .
-├── .agents/skills/        # Five project-local robot design Skills
+├── .agents/skills/        # Five design Skills plus architecture research
 ├── contracts/             # Versioned DesignBrief and DesignPackage schemas
 ├── evals/                 # Positive and safety-blocking Skill cases
 ├── examples/              # Synthetic validated design packages
@@ -35,6 +40,7 @@ python tools/validate_design_package.py examples/warehouse-tote/design-brief.jso
 │   ├── decisions/
 │   └── work-memory/
 ├── experiments/
+├── research/               # Ignored local architecture-research artifacts
 ├── scripts/
 ├── src/
 └── tests/
@@ -45,11 +51,12 @@ python tools/validate_design_package.py examples/warehouse-tote/design-brief.jso
 
 ## Operating model / 运行模式
 
-1. Fill and validate a DesignBrief / 填写并校验 DesignBrief。
-2. Run system design, navigation, hardware, safety, and verification Skills / 按顺序运行五个 Skill。
-3. Validate the DesignPackage and keep uncertainties as blockers or open decisions / 校验设计包，保留不确定性。
-4. Implement only after simulation, fake transport, or replay evidence is planned / 先规划仿真、虚拟传输或回放证据。
-5. Update architecture decisions and working memory / 更新架构决策与工作记忆。
+1. When selecting a reference architecture, research public high-signal projects and record sources / 选择参考架构时先调研公开高质量项目并记录来源。
+2. Fill and validate a DesignBrief / 填写并校验 DesignBrief。
+3. Run system design, navigation, hardware, safety, and verification Skills / 按顺序运行五个 Skill。
+4. Validate the DesignPackage and keep uncertainties as blockers or open decisions / 校验设计包，保留不确定性。
+5. Implement only after simulation, fake transport, or replay evidence is planned / 先规划仿真、虚拟传输或回放证据。
+6. Update architecture decisions and working memory / 更新架构决策与工作记忆。
 
 ## Model-free policy / 型号无关政策
 

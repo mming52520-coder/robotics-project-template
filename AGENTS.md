@@ -9,6 +9,8 @@
 - Run the narrowest relevant test first, then the full project check.
 - Update `docs/work-memory/current.md` after a verified change.
 - Start robot design work with a validated DesignBrief and complete the five Skills in documented order.
+- Before selecting a new reference architecture, run the open-source architecture research Skill and
+  retain its sources, open decisions, and license boundary.
 - Preserve confirmed, inferred, and open statements separately in every DesignPackage.
 
 ## Safety boundary

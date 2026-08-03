@@ -13,6 +13,11 @@ All notable changes follow semantic versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Public open-source architecture research Skill with local project inspection, high-star candidate
+  scoring, source evidence, rate-limit fallback, and a no-code-copy boundary.
+
 ## [0.1.0] - 2026-07-29
 
 ### Added

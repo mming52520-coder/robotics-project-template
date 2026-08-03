@@ -6,12 +6,16 @@ Provide a public, model-free AI design workflow for controlled indoor wheeled ro
 
 ## Current Status
 
-Verified: v0.2 provides versioned design contracts, five focused Skills, synthetic examples, deterministic evaluation cases, and public-content safety checks.
+Verified: v0.2 provides versioned design contracts, five focused design Skills, an optional public
+architecture-research Skill, synthetic examples, deterministic evaluation cases, and public-content
+safety checks.
 
 ## Evidence
 
 - `contracts/` defines the v1 DesignBrief and DesignPackage boundary.
 - `.agents/skills/` contains the ordered design workflow.
+- `open-source-architecture-research` inspects public project facts, ranks public candidates, and
+  records evidence without copying code or using credentials.
 - `examples/` and `evals/` contain synthetic positive and safety-blocking cases.
 - Full local verification: contract, Skill, evaluation, public-content, unit, Python, YAML, Markdown, and shell checks passed.
 
@@ -26,8 +30,10 @@ Real robot requirements, calibration, electrical design approval, and physical t
 ## Next Actions
 
 1. Copy a synthetic DesignBrief and replace it with verified local facts. Verify: brief validation passes.
-2. Run the five Skills in order. Verify: completed DesignPackage validation passes.
-3. Review project-specific risks and plan simulation evidence. Verify: verification plan names evidence and human gates.
+2. When selecting a new architecture, run public reference research and review sources and licenses.
+   Verify: a local recommendation names evidence, open decisions, and a verification step.
+3. Run the five Skills in order. Verify: completed DesignPackage validation passes.
+4. Review project-specific risks and plan simulation evidence. Verify: verification plan names evidence and human gates.
 
 ## Verification
 

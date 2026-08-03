@@ -36,6 +36,7 @@ class SkillAndContentValidationTests(unittest.TestCase):
             errors = validate_skill_tree(Path(directory) / "skills")
 
         self.assertIn("missing required skill: mobile-robot-system-design", errors)
+        self.assertIn("missing required skill: open-source-architecture-research", errors)
 
     def test_content_scanner_rejects_sensitive_assignment(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

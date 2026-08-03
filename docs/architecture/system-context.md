@@ -1,6 +1,8 @@
 # System Context
 
-For the repository's indoor wheeled-robot reference, see `docs/reference/indoor-wheeled-robot.md` and ADR-0001. A derived project must replace the sections below with its own verified facts.
+For the repository's indoor wheeled-robot reference, see `docs/reference/indoor-wheeled-robot.md`
+and ADR-0001. Use ADR-0002 when evaluating public reference architectures. A derived project must
+replace the sections below with its own verified facts.
 
 ## Purpose
 

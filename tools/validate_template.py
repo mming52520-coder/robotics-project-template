@@ -20,6 +20,7 @@ REQUIRED_PATHS = (
     "docs/architecture/system-context.md",
     "docs/decisions/0000-template.md",
     "docs/decisions/0001-model-free-design-package.md",
+    "docs/decisions/0002-public-reference-architecture-research.md",
     "docs/reference/indoor-wheeled-robot.md",
     "docs/work-memory/current.md",
     "experiments/experiment-template.md",

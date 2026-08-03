@@ -9,6 +9,7 @@ __pycache__/
 build/
 dist/
 log/
+research/architecture/
 
 config/private/*
 !config/private/README.md

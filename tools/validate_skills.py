@@ -13,6 +13,7 @@ REQUIRED_SKILLS = {
     "mobile-robot-hardware-planning",
     "mobile-robot-control-safety",
     "mobile-robot-verification-plan",
+    "open-source-architecture-research",
 }
 
 
