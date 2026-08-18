@@ -2,7 +2,7 @@
 
 A public, model-free template for AI-assisted design of controlled indoor wheeled robots. It helps an AI turn a structured requirement into a reviewable ROS 2 reference architecture, algorithm plan, hardware functional plan, safety plan, and verification plan.
 
-这是一个公开、型号无关的模板，用于 AI 辅助设计受控环境中的室内轮式机器人。它将结构化需求转为可审查的 ROS 2 参考架构、算法方案、硬件功能方案、安全方案和验证计划。
+本项目用于 AI 辅助设计受控环境中的室内轮式机器人。它将结构化需求转为可审查的 ROS 2 参考架构、算法方案、硬件功能方案、安全方案和验证计划。
 
 The repository does not include product code, hardware drivers, product recommendations, real configuration, or permission to actuate physical hardware. Examples are synthetic and physical output is disabled by default.
 
