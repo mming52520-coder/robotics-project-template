@@ -1,9 +1,6 @@
 # Robotics Project Template
-
-A public, model-free template for AI-assisted design of controlled indoor wheeled robots. It helps an AI turn a structured requirement into a reviewable ROS 2 reference architecture, algorithm plan, hardware functional plan, safety plan, and verification plan.
-
-本项目用于 AI 辅助设计受控环境中的室内轮式机器人。它将结构化需求转为可审查的 ROS 2 参考架构、算法方案、硬件功能方案、安全方案和验证计划。
-
+本项目用于 AI 辅助设计轮式机器人。它将结构化需求转为可审查的 ROS 2 架构、算法方案、硬件功能方案、安全方案和测试计划。
+可将各测试计划交由builder构建角色的agent执行。
 The repository does not include product code, hardware drivers, product recommendations, real configuration, or permission to actuate physical hardware. Examples are synthetic and physical output is disabled by default.
 
 Before starting a new architecture, use `open-source-architecture-research` to inspect the current
@@ -58,13 +55,13 @@ python tools/validate_design_package.py examples/warehouse-tote/design-brief.jso
 5. Implement only after simulation, fake transport, or replay evidence is planned / 先规划仿真、虚拟传输或回放证据。
 6. Update architecture decisions and working memory / 更新架构决策与工作记忆。
 
-## Model-free policy / 型号无关政策
+## Model-free policy
 
 - Describe hardware functions, interfaces, performance, health signals, environment, and degradation behavior.
 - Never commit or generate vendor, model, part number, serial number, customer data, site data, endpoint, account, or credential.
 - Treat a user-provided product identity as a capability constraint; do not copy it into a public artifact.
 
-## Safety boundary / 安全边界
+## Safety boundary 
 
 - Default hardware-related work to simulation, fake transports, or offline replay.
 - Do not weaken stop, interlock, watchdog, limit, or fault-recovery behavior.
