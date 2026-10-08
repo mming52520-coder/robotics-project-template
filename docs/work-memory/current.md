@@ -25,6 +25,12 @@ The follow-on `codex/hardware-protocol-handoff` candidate defines a private,
 source-backed hardware selection handoff, protocol-pending algorithm work over fake
 interfaces, later received-protocol adapter checks, and a separate supervised physical
 trial gate. It does not select a product, implement a driver, or authorize a trial.
+An independent Agent reviewed this candidate and identified stale safety-state
+recovery, self-selected ChangeContract baseline, and a historical contract-test
+fixture that blocked new design work. The fixes are in the local candidate. A
+separate Agent's first natural-language coding probe implemented a simulated
+timeout diagnostic but remained BLOCKED by that historical fixture; rerun on
+the repaired candidate is pending.
 
 ## Evidence
 
@@ -55,6 +61,10 @@ trial gate. It does not select a product, implement a driver, or authorize a tri
   fixed-wait test races during ROS discovery; the test now waits boundedly for healthy
   simulated inputs and actual fake-base output. It passed three targeted reruns.
   The safety-gate runtime and physical-output state were not changed.
+- Independent review follow-up: 56 offline unit tests, contract/public checks,
+  Ruff, YAML, Markdown, and ShellCheck passed. Four Jazzy simulation tests,
+  including synthetic safety-status loss and reset, passed. This is local
+  evidence; independent human review and fresh remote CI remain outstanding.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
 - GitHub Actions for PR #18 at `1b23621`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
 
@@ -80,6 +90,8 @@ not receive this workflow until it is reviewed and merged.
 No project-specific hardware requirements, selected device, received protocol,
 calibration, electrical approval, or physical-trial authorization exists in this
 template. A separate reviewer and fresh remote CI remain pending for this candidate.
+The first independent Agent coding probe is blocked on a fixed historical
+contract-test fixture. Its behavior must be retested from the repaired candidate.
 
 ## Next Actions
 
@@ -89,9 +101,9 @@ template. A separate reviewer and fresh remote CI remain pending for this candid
 3. Run the five Skills in order. Verify: completed DesignPackage validation passes.
 4. Extend the synthetic ROS graph only from validated project requirements. Verify: offline logic, real ROS graph, and installed launch checks cover each new behavior.
 5. Review project-specific risks and plan simulation evidence before any physical trial. Verify: the verification plan names evidence and human gates.
-6. Give an AGENTS.md-aware coding Agent a bounded simulation requirement in this checkout.
-   Verify: it changes source and regression tests, produces a review record, and reports
-   final snapshot evidence rather than stopping at a plan.
+6. Rerun an AGENTS.md-aware coding Agent from the repaired candidate on a bounded
+   simulation requirement. Verify: it changes source and regression tests, produces
+   a review record, and reports final snapshot evidence rather than stopping at a plan.
 7. For a new hardware-dependent project requirement, build a private selection list
    linked to public requirement and interface IDs, and implement independent algorithm
    behavior with fake or replay transport. Verify source dates and unresolved gaps.

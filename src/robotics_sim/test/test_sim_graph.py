@@ -56,6 +56,21 @@ def run_graph_scenario() -> None:
         assert safe[-1].linear.x == 0.2
         assert odom[-1].pose.pose.position.x > 0.0
 
+        environment.status_timer.cancel()
+        pump(0.35)
+        assert safe[-1].linear.x == 0.0
+        environment.status_timer.reset()
+        pump(0.15)
+        send_motion()
+        pump(0.1)
+        assert safe[-1].linear.x == 0.0
+        future = reset.call_async(Trigger.Request())
+        pump(0.1)
+        assert future.done() and future.result().success
+        send_motion()
+        pump(0.1)
+        assert safe[-1].linear.x == 0.2
+
         environment.set_parameters([Parameter("health_ok", value=False)])
         pump(0.2)
         assert safe[-1].linear.x == 0.0

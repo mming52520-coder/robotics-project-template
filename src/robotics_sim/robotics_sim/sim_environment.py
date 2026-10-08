@@ -15,7 +15,7 @@ class SimEnvironmentNode(Node):
             name: self.create_publisher(Bool, name, 10)
             for name in ("emergency_stop", "health_ok", "obstacle_clear")
         }
-        self.create_timer(0.1, self._publish)
+        self.status_timer = self.create_timer(0.1, self._publish)
 
     def _publish(self) -> None:
         for name, publisher in self.status_publishers.items():

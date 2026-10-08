@@ -281,8 +281,8 @@
           "REQ-SIM-FAKE"
         ],
         "level": "integration",
-        "scenario": "Graph rejects bad motion and faults, latches E-stop, resets safely, and expires commands.",
-        "acceptance": "Graph rejects bad motion and faults, latches E-stop, resets safely, and expires commands.",
+        "scenario": "Graph rejects bad motion and faults, latches E-stop, resets safely, expires commands, and loses then restores synthetic safety status.",
+        "acceptance": "A stale safety-status stream stops motion and does not restore an old command; after status resumes, E-stop remains latched until explicit reset and a fresh command. Other faults and command expiry also stop motion.",
         "evidence": "build/robotics_sim/test_results/robotics_sim/pytest.xml",
         "status": "implemented",
         "test_node": "src/robotics_sim/test/test_sim_graph.py::SimGraphTest::test_faults_stop_and_require_fresh_motion",

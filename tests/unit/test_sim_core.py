@@ -71,6 +71,38 @@ class SafetyGateTests(unittest.TestCase):
             fault(True, 1.02)
             self.assertEqual(self.gate.output(1.02), (0.0, 0.0))
 
+    def test_stale_status_cannot_restore_old_motion(self) -> None:
+        for lost_input in ("estop", "health", "obstacle"):
+            for observe_loss in (False, True):
+                with self.subTest(lost_input=lost_input, observe_loss=observe_loss):
+                    gate = SafetyGate()
+                    gate.receive_estop(False, 1.0)
+                    gate.receive_health(True, 1.0)
+                    gate.receive_obstacle(True, 1.0)
+                    self.assertTrue(gate.reset_estop(1.0))
+                    if lost_input != "estop":
+                        gate.receive_estop(False, 1.2)
+                    if lost_input != "health":
+                        gate.receive_health(True, 1.2)
+                    if lost_input != "obstacle":
+                        gate.receive_obstacle(True, 1.2)
+                    self.assertTrue(gate.receive_command(0.2, 0.0, 1.2))
+                    if observe_loss:
+                        self.assertEqual(gate.output(1.31), (0.0, 0.0))
+                    {
+                        "estop": gate.receive_estop,
+                        "health": gate.receive_health,
+                        "obstacle": gate.receive_obstacle,
+                    }[lost_input](lost_input != "estop", 1.32)
+                    self.assertEqual(gate.output(1.33), (0.0, 0.0))
+                    self.assertIsNone(gate.command)
+                    if lost_input == "estop":
+                        self.assertTrue(gate.estop_latched)
+                        self.assertFalse(gate.receive_command(0.2, 0.0, 1.34))
+                        self.assertTrue(gate.reset_estop(1.34))
+                    self.assertTrue(gate.receive_command(0.2, 0.0, 1.35))
+                    self.assertEqual(gate.output(1.35), (0.2, 0.0))
+
 
 class FakeBaseTests(unittest.TestCase):
     def test_motion_and_independent_timeout(self) -> None:

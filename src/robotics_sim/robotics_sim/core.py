@@ -37,6 +37,7 @@ class SafetyGate:
         self.obstacle_at: float | None = None
 
     def receive_command(self, linear: float, angular: float, now: float) -> bool:
+        self._expire_stale_status(now)
         if not (
             math.isfinite(linear) and math.isfinite(angular)
             and abs(linear) <= self.max_linear and abs(angular) <= self.max_angular
@@ -50,6 +51,7 @@ class SafetyGate:
         return True
 
     def receive_estop(self, asserted: bool, now: float) -> None:
+        self._expire_stale_status(now)
         self.estop = asserted
         self.estop_at = now
         if asserted:
@@ -58,6 +60,7 @@ class SafetyGate:
             self.command_at = None
 
     def receive_health(self, healthy: bool, now: float) -> None:
+        self._expire_stale_status(now)
         self.health = healthy
         self.health_at = now
         if not healthy:
@@ -65,6 +68,7 @@ class SafetyGate:
             self.command_at = None
 
     def receive_obstacle(self, clear: bool, now: float) -> None:
+        self._expire_stale_status(now)
         self.obstacle_clear = clear
         self.obstacle_at = now
         if not clear:
@@ -78,7 +82,20 @@ class SafetyGate:
             and self.obstacle_clear is True and _fresh(now, self.obstacle_at, self.status_timeout)
         )
 
+    def _expire_stale_status(self, now: float) -> None:
+        estop_fresh = _fresh(now, self.estop_at, self.status_timeout)
+        if not estop_fresh:
+            self.estop_latched = True
+        if not (
+            estop_fresh
+            and _fresh(now, self.health_at, self.status_timeout)
+            and _fresh(now, self.obstacle_at, self.status_timeout)
+        ):
+            self.command = None
+            self.command_at = None
+
     def reset_estop(self, now: float) -> bool:
+        self._expire_stale_status(now)
         if not self._inputs_ready(now):
             return False
         self.estop_latched = False
@@ -87,6 +104,7 @@ class SafetyGate:
         return True
 
     def output(self, now: float) -> tuple[float, float]:
+        self._expire_stale_status(now)
         if (
             self.estop_latched or not self._inputs_ready(now)
             or not _fresh(now, self.command_at, self.command_timeout)

@@ -43,9 +43,16 @@ def changed_paths(base: str, root: Path = ROOT) -> set[str]:
     return set(tracked + dirty_tracked + untracked)
 
 
+def trusted_candidate_base(root: Path = ROOT) -> str:
+    """Use the event base or tracked main, never a base chosen by the contract."""
+    base_ref = os.environ.get("BASE_SHA") or "origin/main"
+    head_ref = os.environ.get("PR_HEAD_SHA") or "HEAD"
+    return _git("merge-base", head_ref, base_ref, root=root)
+
+
 def current_change_contract(root: Path = ROOT) -> Path:
     """Find the one contract changed by this candidate, not a prior merged contract."""
-    base = os.environ.get("BASE_SHA") or _git("merge-base", "HEAD", "origin/main", root=root)
+    base = trusted_candidate_base(root)
     paths = changed_paths(base, root)
     candidates = sorted(
         path for path in paths if re.fullmatch(r"changes/[^/]+/change\.json", path)
@@ -120,12 +127,9 @@ def validate_change_contract(
             errors.append(f"unsafe allowed_paths pattern: {pattern}")
     if errors:
         return errors
-    base = document["base_revision"]
-    if subprocess.run(
-        ["git", "merge-base", "--is-ancestor", base, "HEAD"], cwd=root,
-        capture_output=True, check=False,
-    ).returncode != 0:
-        return ["base_revision must be an ancestor of HEAD"]
+    base = trusted_candidate_base(root)
+    if document["base_revision"] != base:
+        return ["base_revision must match the trusted candidate merge-base"]
     for path in sorted(changed_paths(base, root)):
         if not any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns):
             errors.append(f"changed path outside allowed_paths: {path}")
