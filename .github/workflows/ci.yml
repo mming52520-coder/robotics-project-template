@@ -36,7 +36,7 @@ jobs:
         run: bash scripts/run-checks.sh
 
       - name: Verify repository evidence
-        run: python tools/evidence.py validate "artifacts/${EVIDENCE_RUN_ID}"
+        run: python3 tools/evidence.py validate "artifacts/${EVIDENCE_RUN_ID}"
 
       - name: Preserve repository evidence
         if: always()
@@ -60,6 +60,10 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
+      - name: Trust checked-out workspace in ROS container
+        shell: bash
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Install contract validator
         shell: bash
