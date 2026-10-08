@@ -5,6 +5,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
+import subprocess
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -56,6 +58,26 @@ class ChangeContractTests(unittest.TestCase):
             "base_revision must match the trusted candidate merge-base",
             self.validate_fixture(changed),
         )
+
+    def test_main_push_accepts_older_pr_base_without_shortening_scope(self) -> None:
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
+            capture_output=True, text=True,
+        ).stdout.strip()
+        event = {
+            "GITHUB_EVENT_NAME": "push", "GITHUB_REF": "refs/heads/main",
+            "BASE_SHA": head, "PR_HEAD_SHA": head,
+        }
+        original_base = json.loads(CONTRACT.read_text(encoding="utf-8"))["base_revision"]
+        with patch.dict(os.environ, event):
+            changed = copy.deepcopy(self.document)
+            changed["base_revision"] = original_base
+            self.assertEqual(self.validate_fixture(changed), [])
+            changed["base_revision"] = "0" * 40
+            self.assertIn(
+                "base_revision must precede the trusted main push base",
+                self.validate_fixture(changed),
+            )
 
     def test_missing_test_or_fake_approval_fails(self) -> None:
         changed = copy.deepcopy(self.document)

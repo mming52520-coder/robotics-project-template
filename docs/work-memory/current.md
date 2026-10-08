@@ -65,6 +65,9 @@ the repaired candidate is pending.
   Ruff, YAML, Markdown, and ShellCheck passed. Four Jazzy simulation tests,
   including synthetic safety-status loss and reset, passed. This is local
   evidence; independent human review and fresh remote CI remain outstanding.
+  Independent follow-up found that a PR's fork base can differ from the next
+  main push's prior tip. The push gate now checks all paths against the trusted
+  event range while accepting an older contract base that precedes that tip.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
 - GitHub Actions for PR #18 at `1b23621`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
 

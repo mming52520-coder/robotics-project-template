@@ -128,7 +128,19 @@ def validate_change_contract(
     if errors:
         return errors
     base = trusted_candidate_base(root)
-    if document["base_revision"] != base:
+    main_push = (
+        os.environ.get("GITHUB_EVENT_NAME") == "push"
+        and os.environ.get("GITHUB_REF") == "refs/heads/main"
+    )
+    if main_push:
+        # A PR may have forked before the previous main tip. The scope below
+        # still uses the trusted push event base, never the declared base.
+        if subprocess.run(
+            ["git", "merge-base", "--is-ancestor", document["base_revision"], base],
+            cwd=root, capture_output=True, check=False,
+        ).returncode != 0:
+            return ["base_revision must precede the trusted main push base"]
+    elif document["base_revision"] != base:
         return ["base_revision must match the trusted candidate merge-base"]
     for path in sorted(changed_paths(base, root)):
         if not any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns):
