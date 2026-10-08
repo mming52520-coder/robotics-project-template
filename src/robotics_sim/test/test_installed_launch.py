@@ -100,13 +100,34 @@ class InstalledLaunchTest(unittest.TestCase):
             request.linear.x = 0.2
             requests.publish(request)
 
+        def wait_for_motion(require_odometry: bool = False) -> None:
+            deadline = time.monotonic() + 5.0
+            while time.monotonic() < deadline:
+                send_motion()
+                pump(0.05)
+                if safe_commands[-1].linear.x == 0.2 and (
+                    not require_odometry
+                    or (odometry and odometry[-1].twist.twist.linear.x == 0.2)
+                ):
+                    return
+            self.fail("motion did not reach the expected simulated interface")
+
         def reset_gate() -> None:
             self.assertTrue(reset.wait_for_service(timeout_sec=3.0))
-            future = reset.call_async(Trigger.Request())
-            deadline = time.monotonic() + 3.0
-            while not future.done() and time.monotonic() < deadline:
-                rclpy.spin_once(probe, timeout_sec=0.05)
-            self.assertTrue(future.done() and future.result().success)
+            deadline = time.monotonic() + 5.0
+            while time.monotonic() < deadline:
+                future = reset.call_async(Trigger.Request())
+                response_deadline = min(deadline, time.monotonic() + 1.0)
+                while not future.done() and time.monotonic() < response_deadline:
+                    rclpy.spin_once(probe, timeout_sec=0.05)
+                self.assertTrue(future.done(), "reset service did not respond")
+                response = future.result()
+                self.assertIsNotNone(response)
+                if response.success:
+                    return
+                self.assertEqual(response.message, "inputs not healthy and fresh")
+                pump(0.1)
+            self.fail("reset stayed blocked after healthy synthetic inputs")
 
         try:
             with tempfile.TemporaryFile(mode="w+t") as environment_log, tempfile.TemporaryFile(
@@ -123,13 +144,8 @@ class InstalledLaunchTest(unittest.TestCase):
                     self.assertTrue(safe_commands)
                     pump(0.3)
                     reset_gate()
-                    for _ in range(20):
-                        send_motion()
-                        pump(0.05)
-                        if safe_commands[-1].linear.x == 0.2:
-                            break
+                    wait_for_motion(require_odometry=True)
                     self.assertEqual(safe_commands[-1].linear.x, 0.2)
-                    pump(0.1)
                     self.assertTrue(odometry)
                     self.assertEqual(odometry[-1].twist.twist.linear.x, 0.2)
 
@@ -148,11 +164,7 @@ class InstalledLaunchTest(unittest.TestCase):
                         pump(0.05)
                         self.assertEqual(safe_commands[-1].linear.x, 0.0)
                     reset_gate()
-                    for _ in range(20):
-                        send_motion()
-                        pump(0.05)
-                        if safe_commands[-1].linear.x == 0.2:
-                            break
+                    wait_for_motion()
                     self.assertEqual(safe_commands[-1].linear.x, 0.2)
                 except Exception:
                     environment_log.seek(0)

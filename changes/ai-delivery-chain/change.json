@@ -10,7 +10,8 @@
     "Repository Skills and optional read-only review handoff",
     "Direct local requirement-to-code and review routing with plan and final contract gates",
     "Repository-side PR and governance documentation",
-    "Private hardware selection and received-protocol workflow rules, with safe public validation"
+    "Private hardware selection and received-protocol workflow rules, with safe public validation",
+    "Bounded readiness wait for the installed simulation restart test"
   ],
   "out_of_scope": [
     "ROS control behavior, physical devices, production parameters, and hardware output",
@@ -32,6 +33,7 @@
     "tools/**",
     "scripts/**",
     "tests/unit/**",
+    "src/robotics_sim/test/test_installed_launch.py",
     "evals/**",
     "examples/*/design-package.json",
     "changes/**",

@@ -51,6 +51,10 @@ trial gate. It does not select a product, implement a driver, or authorize a tri
   tests passed locally. Git-ignore regression confirms a local private selection file
   is permitted while a force-tracked private file is rejected. The staged workflow
   acceptance record is `docs/acceptance/hardware-protocol-handoff.md`.
+  Intermittent installed-launch reset rejection and missing first odometry exposed
+  fixed-wait test races during ROS discovery; the test now waits boundedly for healthy
+  simulated inputs and actual fake-base output. It passed three targeted reruns.
+  The safety-gate runtime and physical-output state were not changed.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
 - GitHub Actions for PR #18 at `1b23621`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
 
