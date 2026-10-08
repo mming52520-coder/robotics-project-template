@@ -33,10 +33,14 @@ INPUT_PATTERNS = (
 )
 
 
-def _git(*args: str) -> bytes:
+def _git_raw(*args: str) -> bytes:
     return subprocess.run(
         ["git", *args], cwd=ROOT, check=True, capture_output=True
-    ).stdout.strip()
+    ).stdout
+
+
+def _git(*args: str) -> bytes:
+    return _git_raw(*args).strip()
 
 
 def _sha(data: bytes) -> str:
@@ -45,6 +49,42 @@ def _sha(data: bytes) -> str:
 
 def _file_sha(path: Path) -> str:
     return _sha(path.read_bytes())
+
+
+def _staged_worktree_diverged() -> bool:
+    """Catch staged bytes or deletions that differ from the files being tested."""
+    names = _git_raw(
+        "diff", "--cached", "--name-only", "--no-renames", "-z", "HEAD", "--"
+    ).split(b"\0")
+    for raw_name in names:
+        if not raw_name:
+            continue
+        name = raw_name.decode("utf-8", "surrogateescape")
+        path = ROOT / name
+        entry = _git_raw("ls-files", "--stage", "-z", "--", name)
+        if not entry:
+            if path.exists() or path.is_symlink():
+                return True
+            continue
+        metadata = entry.split(b"\t", 1)[0].split(b" ")
+        if len(metadata) != 3 or metadata[2] != b"0":
+            return True
+        mode = metadata[0]
+        if mode == b"120000":
+            if not path.is_symlink():
+                return True
+            working = os.readlink(path).encode("utf-8", "surrogateescape")
+        elif mode in (b"100644", b"100755"):
+            if path.is_symlink() or not path.is_file():
+                return True
+            working = path.read_bytes()
+            if (mode == b"100755") != bool(path.stat().st_mode & 0o111):
+                return True
+        else:
+            return True
+        if working != _git_raw("show", f":{name}"):
+            return True
+    return False
 
 
 def snapshot() -> dict[str, Any]:
@@ -60,7 +100,12 @@ def snapshot() -> dict[str, Any]:
             content[name] = _file_sha(path)
         else:
             content[name] = "DELETED"
-    digest_input = json.dumps(content, sort_keys=True, separators=(",", ":")).encode()
+    index_diff = _git_raw("diff", "--cached", "HEAD", "--binary")
+    index_diff_sha256 = _sha(index_diff)
+    digest_input = json.dumps(
+        {"files": content, "index_diff_sha256": index_diff_sha256},
+        sort_keys=True, separators=(",", ":"),
+    ).encode()
     untracked = [
         name.decode("utf-8", "surrogateescape") for name in
         _git("ls-files", "--others", "--exclude-standard", "-z").split(b"\0") if name
@@ -68,7 +113,9 @@ def snapshot() -> dict[str, Any]:
     return {
         "digest": _sha(digest_input),
         "dirty": bool(_git("status", "--porcelain", "--untracked-files=all")),
-        "workspace_diff_sha256": _sha(_git("diff", "HEAD", "--binary")),
+        "workspace_diff_sha256": _sha(_git_raw("diff", "HEAD", "--binary")),
+        "index_diff_sha256": index_diff_sha256,
+        "index_worktree_diverged": _staged_worktree_diverged(),
         "untracked_inputs": sorted(untracked),
         "policy_and_test_hashes": {
             name: content[name] for name in paths
@@ -213,7 +260,10 @@ def run_suite(suite: str) -> int:
     }
     if suite == "ros":
         (ROOT / JUNIT).unlink(missing_ok=True)
-    if suite == "ros" and not Path("/opt/ros/jazzy/setup.bash").is_file():
+    if before["index_worktree_diverged"]:
+        manifest["status"] = "blocked"
+        manifest["blocker"] = "staged index differs from the tested worktree"
+    elif suite == "ros" and not Path("/opt/ros/jazzy/setup.bash").is_file():
         manifest["status"] = "blocked"
         manifest["blocker"] = "ROS 2 Jazzy setup.bash unavailable"
     else:
@@ -284,8 +334,11 @@ def validate_manifest(directory: Path) -> list[str]:
         errors.append("evidence run did not pass")
     if manifest.get("tested_sha") != _git("rev-parse", "HEAD").decode():
         errors.append("tested_sha differs from current HEAD")
-    if manifest.get("snapshot", {}).get("digest") != snapshot()["digest"]:
+    current_snapshot = snapshot()
+    if manifest.get("snapshot", {}).get("digest") != current_snapshot["digest"]:
         errors.append("evidence is stale for the current workspace snapshot")
+    if current_snapshot["index_worktree_diverged"]:
+        errors.append("staged index differs from the tested worktree")
     change = Path(manifest.get("change_contract_path", ""))
     if not re.fullmatch(r"changes/[^/]+/change\.json", change.as_posix()):
         errors.append("invalid change contract path in manifest")

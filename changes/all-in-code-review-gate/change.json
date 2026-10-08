@@ -1,0 +1,47 @@
+{
+  "change_id": "all-in-code-review-gate",
+  "design_package_ref": "examples/warehouse-tote/design-package.json",
+  "design_package_sha256": "062ef44e92613fe7855b262a5a22c7a85ae1f96e62b251cb63cebf950162e4a0",
+  "base_revision": "837da9e4e4f06f6dd1494addd8743779637808d4",
+  "objective": "Make local AI code review coverage and evidence claims machine-checkable for dirty candidate worktrees without changing robot behavior.",
+  "in_scope": [
+    "Generate a trusted-base review inventory for committed and uncommitted changes",
+    "Keep both old and new paths visible when a file is renamed",
+    "Include index-only staged changes and reject evidence when staged and tested bytes diverge",
+    "Bind review evidence to the reviewed base, head, and ChangeContract",
+    "Validate review coverage, findings status, and referenced execution evidence",
+    "Route an AGENTS.md-aware coding Agent through the new local review gate"
+  ],
+  "out_of_scope": [
+    "ROS control or physical-output behavior",
+    "Automatic commits, pushes, merges, or server-side policy changes",
+    "Claiming model review or human approval from a JSON record"
+  ],
+  "allowed_paths": [
+    "changes/all-in-code-review-gate/change.json",
+    "tools/change_contracts.py",
+    "tools/evidence.py",
+    "tools/review_coverage.py",
+    "tests/unit/test_change_contract.py",
+    "tests/unit/test_evidence.py",
+    "tests/unit/test_review_coverage.py",
+    "AGENTS.md",
+    ".agents/skills/robotics-evidence-review/SKILL.md",
+    ".agents/skills/robotics-evidence-review/assets/review-record-template.md",
+    "docs/reference/agent-development-workflow.md",
+    "docs/work-memory/current.md",
+    "README.md"
+  ],
+  "affected_requirement_ids": ["REQ-SIM-STOP"],
+  "invariants": [
+    "The simulated SafetyGate and physical-output state remain unchanged.",
+    "Skipped, missing, failed, or stale checks are never represented as passing review evidence.",
+    "A candidate-authored record cannot grant independent human approval."
+  ],
+  "required_test_ids": ["T-SIM-GRAPH"],
+  "stop_conditions": [
+    "The review inventory omits any tracked, dirty, or untracked changed path.",
+    "A review claims completion with unreviewed files, unresolved findings, or invalid evidence.",
+    "A change would alter robot safety authority or require real hardware."
+  ]
+}
