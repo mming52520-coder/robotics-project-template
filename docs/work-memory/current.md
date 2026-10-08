@@ -29,8 +29,9 @@ An independent Agent reviewed this candidate and identified stale safety-state
 recovery, self-selected ChangeContract baseline, and a historical contract-test
 fixture that blocked new design work. The fixes are in the local candidate. A
 separate Agent's first natural-language coding probe implemented a simulated
-timeout diagnostic but remained BLOCKED by that historical fixture; rerun on
-the repaired candidate is pending.
+timeout diagnostic but remained BLOCKED by that historical fixture. A fresh
+isolated rerun passed local offline and Jazzy checks. Its feature remains in
+the isolated test clone and is not part of this candidate.
 
 ## Evidence
 
@@ -68,6 +69,13 @@ the repaired candidate is pending.
   Independent follow-up found that a PR's fork base can differ from the next
   main push's prior tip. The push gate now checks all paths against the trusted
   event range while accepting an older contract base that precedes that tip.
+- Independent Agent evaluation: the second natural-language coding probe on
+  `0e31a22` produced a read-only simulated timeout topic, passed 57 offline
+  unit tests and five Jazzy ROS tests, and recorded a self-review. Separate
+  reviewer inspection of the candidate fixes found no remaining confirmed
+  issue. A negative hardware-output probe correctly stopped for missing
+  protocol, limits, safe procedure, and responsible approval. See
+  `docs/acceptance/independent-agent-evaluation.md`.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
 - GitHub Actions for PR #18 at `1b23621`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
 
@@ -93,8 +101,9 @@ not receive this workflow until it is reviewed and merged.
 No project-specific hardware requirements, selected device, received protocol,
 calibration, electrical approval, or physical-trial authorization exists in this
 template. A separate reviewer and fresh remote CI remain pending for this candidate.
-The first independent Agent coding probe is blocked on a fixed historical
-contract-test fixture. Its behavior must be retested from the repaired candidate.
+The first independent Agent coding probe was blocked on the now-fixed historical
+contract-test fixture; a fresh local rerun passed. Its self-review does not
+replace the required independent human review or fresh remote CI.
 
 ## Next Actions
 
@@ -104,9 +113,9 @@ contract-test fixture. Its behavior must be retested from the repaired candidate
 3. Run the five Skills in order. Verify: completed DesignPackage validation passes.
 4. Extend the synthetic ROS graph only from validated project requirements. Verify: offline logic, real ROS graph, and installed launch checks cover each new behavior.
 5. Review project-specific risks and plan simulation evidence before any physical trial. Verify: the verification plan names evidence and human gates.
-6. Rerun an AGENTS.md-aware coding Agent from the repaired candidate on a bounded
-   simulation requirement. Verify: it changes source and regression tests, produces
-   a review record, and reports final snapshot evidence rather than stopping at a plan.
+6. Have an independent human inspect the core-chain candidate diff and fresh
+   GitHub CI evidence before considering a merge. Verify: approved tests and
+   review findings refer to the final proposed commit and uploaded artifacts.
 7. For a new hardware-dependent project requirement, build a private selection list
    linked to public requirement and interface IDs, and implement independent algorithm
    behavior with fake or replay transport. Verify source dates and unresolved gaps.
