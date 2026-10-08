@@ -1,0 +1,15 @@
+sim:
+  safety_gate:
+    ros__parameters:
+      max_linear_mps: 0.6
+      max_angular_radps: 1.0
+      command_timeout_s: 0.25
+      status_timeout_s: 0.3
+  fake_base:
+    ros__parameters:
+      command_timeout_s: 0.2
+  sim_environment:
+    ros__parameters:
+      emergency_stop: false
+      health_ok: true
+      obstacle_clear: true

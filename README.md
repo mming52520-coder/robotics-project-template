@@ -1,7 +1,8 @@
 # Robotics Project Template
+
 本项目用于 AI 辅助设计轮式机器人。它将结构化需求转为可审查的 ROS 2 架构、算法方案、硬件功能方案、安全方案和测试计划。
 可将各测试计划交由builder构建角色的agent执行。
-The repository does not include product code, hardware drivers, product recommendations, real configuration, or permission to actuate physical hardware. Examples are synthetic and physical output is disabled by default.
+The repository includes a simulation-only ROS 2 package. It has no hardware drivers, product recommendations, real configuration, or permission to actuate physical hardware. Examples are synthetic and physical output is disabled by default.
 
 Before starting a new architecture, use `open-source-architecture-research` to inspect the current
 project and compare high-signal public references. The Skill records reproducible evidence; the AI
@@ -13,13 +14,36 @@ clone code or choose products.
 1. Select **Use this template** on GitHub.
 2. Copy a synthetic DesignBrief from `examples/` and replace it with verified project facts only.
 3. Validate the brief, invoke the Skills in sequence, and validate the final package.
+4. Review `contracts/README.md`, `docs/reference/`, and the documented safety gate before any implementation work.
 
 ```text
 python tools/validate_design_package.py examples/warehouse-tote/design-brief.json
 python tools/validate_design_package.py examples/warehouse-tote/design-brief.json examples/warehouse-tote/design-package.json
 ```
 
-1. Review `contracts/README.md`, `docs/reference/`, and the documented safety gate before any implementation work.
+## Run the ROS 2 simulation / 运行 ROS 2 仿真
+
+The `robotics_sim` package implements the synthetic `warehouse-tote` package's motion interface with a safety gate, fake base, and switchable simulated safety inputs. It does not launch navigation or connect to a device. Use ROS 2 Jazzy on Ubuntu 24.04; from the repository root:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+colcon build --packages-select robotics_sim
+source install/setup.bash
+ros2 launch robotics_sim sim.launch.py
+```
+
+In another sourced terminal, inspect the zero-motion default, then publish a bounded synthetic request:
+
+```bash
+ros2 topic echo /sim/cmd_safe
+ros2 topic pub -r 10 /sim/cmd_request geometry_msgs/msg/Twist \
+  '{linear: {x: 0.2}, angular: {z: 0.0}}'
+ros2 topic echo /sim/odom
+```
+
+Stop the request publisher; its 0.25-second timeout makes the next gate publication zero. To inject a fault, run `ros2 param set /sim/sim_environment emergency_stop true`. Clear it with `ros2 param set /sim/sim_environment emergency_stop false`, then call `ros2 service call /sim/reset_estop std_srvs/srv/Trigger '{}'` and publish a fresh request. The same parameter interface exposes `health_ok` and `obstacle_clear`. See [simulation contract](docs/reference/ros2-simulation.md) for exact topic, timeout, fault, and evidence boundaries.
+
+Run the offline suite with `bash scripts/run-checks.sh`. In a Jazzy environment, run `python3 -m pytest -q src/robotics_sim/test/test_*.py` after sourcing `install/setup.bash`. CI builds the package, tests the ROS graph and installed launch, and stores JUnit results.
 
 ## Structure
 
@@ -39,7 +63,7 @@ python tools/validate_design_package.py examples/warehouse-tote/design-brief.jso
 ├── experiments/
 ├── research/               # Ignored local architecture-research artifacts
 ├── scripts/
-├── src/
+├── src/robotics_sim/      # ROS 2 Jazzy simulation-only package
 └── tests/
     ├── unit/
     ├── integration/
@@ -61,7 +85,7 @@ python tools/validate_design_package.py examples/warehouse-tote/design-brief.jso
 - Never commit or generate vendor, model, part number, serial number, customer data, site data, endpoint, account, or credential.
 - Treat a user-provided product identity as a capability constraint; do not copy it into a public artifact.
 
-## Safety boundary 
+## Safety boundary
 
 - Default hardware-related work to simulation, fake transports, or offline replay.
 - Do not weaken stop, interlock, watchdog, limit, or fault-recovery behavior.
@@ -76,7 +100,7 @@ python tools/validate_skills.py
 python tools/validate_evals.py
 python tools/validate_public_content.py
 python -m unittest discover -s tests/unit -p "test_*.py"
-python -m ruff check tools
+python -m ruff check tools src/robotics_sim tests/unit/test_sim_core.py
 yamllint --config-file .yamllint.yaml .
 pymarkdown --config .pymarkdown.json scan .
 shellcheck scripts/*.sh

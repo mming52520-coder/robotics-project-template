@@ -17,6 +17,8 @@ All notable changes follow semantic versioning.
 
 - Public open-source architecture research Skill with local project inspection, high-star candidate
   scoring, source evidence, rate-limit fallback, and a no-code-copy boundary.
+- Simulation-only ROS 2 Jazzy package with bounded motion gating, a fake base, synthetic fault
+  injection, installed launch, offline tests, and ROS runtime CI.
 
 ## [0.1.0] - 2026-07-29
 
