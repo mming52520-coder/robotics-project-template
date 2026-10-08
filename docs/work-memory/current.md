@@ -23,6 +23,7 @@ ROS runtime CI gate. This is a starting point, not a complete navigation system.
 - Offline `scripts/run-checks.sh`: 33 unit tests passed. Ruff, YAML, Markdown, shell, and public-content checks passed.
 - Jazzy container: `colcon build --packages-select robotics_sim` passed; two ROS graph and installed-launch tests passed with JUnit results and `colcon test-result` showing 2 tests, 0 failures.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
+- GitHub Actions for PR #18 at `4a5368c`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
 
 ## Decisions
 
@@ -31,7 +32,7 @@ ADR-0003 records the simulation runtime scope and reference-project evidence bou
 
 ## Blockers
 
-Real robot requirements, localization, navigation, sensor integration, calibration, electrical design approval, and physical trial authorization remain project-specific and must stay outside this public template until independently specified and verified. ROS 2 CI has run locally in a Jazzy container; the remote GitHub Actions result for the proposed change is pending.
+Real robot requirements, localization, navigation, sensor integration, calibration, electrical design approval, and physical trial authorization remain project-specific and must stay outside this public template until independently specified and verified.
 
 ## Next Actions
 
