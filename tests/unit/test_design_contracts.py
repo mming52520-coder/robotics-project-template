@@ -12,6 +12,7 @@ from tools.design_contracts import (
     validate_design_brief,
     validate_design_package,
     validate_junit_evidence,
+    validate_legacy_design_package,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -39,6 +40,15 @@ class DesignContractTests(unittest.TestCase):
         package = load_example("design-package.json")
         package["schema_version"] = "v1"
         self.assertIn("schema_version must be v2", validate_design_package(package, brief))
+
+    def test_v1_design_only_compatibility_cannot_prove_implementation(self) -> None:
+        brief = load_example("design-brief.json")
+        package = load_example("design-package.json")
+        package["schema_version"] = "v1"
+        package.pop("requirements")
+        package.pop("traceability")
+        self.assertEqual(validate_legacy_design_package(package, brief), [])
+        self.assertTrue(validate_design_package(package, brief))
 
     def test_core_sections_reject_missing_null_and_wrong_type(self) -> None:
         brief = load_example("design-brief.json")
@@ -122,6 +132,22 @@ class DesignContractTests(unittest.TestCase):
                 mutate(package)
                 self.assertTrue(validate_design_package(package, brief))
 
+    def test_scope_acceptance_preconditions_and_decision_blockers(self) -> None:
+        brief = load_example("design-brief.json")
+        original = load_example("design-package.json")
+        for mutate in (
+            lambda p: p["requirements"][0].pop("scope"),
+            lambda p: p["requirements"][0].update(acceptance=None),
+            lambda p: p["verification_plan"]["checks"][0].pop("preconditions"),
+            lambda p: p["open_decisions"][0].update(requirement_ids=["MISSING-ID"]),
+            lambda p: p["open_decisions"][0].update(requirement_ids=["REQ-SIM-STOP"]),
+            lambda p: p["open_decisions"][0].update(blocks_implementation="true"),
+        ):
+            with self.subTest(mutate=str(mutate)):
+                package = copy.deepcopy(original)
+                mutate(package)
+                self.assertTrue(validate_design_package(package, brief))
+
     def test_junit_evidence_requires_every_passing_case(self) -> None:
         package = load_example("design-package.json")
         checks = [
@@ -174,7 +200,7 @@ class DesignContractTests(unittest.TestCase):
 
         errors = validate_design_package(package, brief)
 
-        self.assertIn("assumptions[0] confirmed claim requires evidence", errors)
+        self.assertTrue(any("assumptions/0" in error and "evidence" in error for error in errors))
 
 
 if __name__ == "__main__":

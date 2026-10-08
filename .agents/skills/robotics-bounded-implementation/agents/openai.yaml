@@ -1,0 +1,4 @@
+interface:
+  display_name: "Robotics Bounded Implementation"
+  short_description: "Implement a scoped change and retain raw checks."
+  default_prompt: "Use $robotics-bounded-implementation for this approved change."

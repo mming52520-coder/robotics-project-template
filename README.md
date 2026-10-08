@@ -1,7 +1,7 @@
 # Robotics Project Template
 
 本项目用于 AI 辅助设计轮式机器人。它将结构化需求转为可审查的 ROS 2 架构、算法方案、硬件功能方案、安全方案和测试计划。
-可将各测试计划交由builder构建角色的agent执行。
+实现工作以经过校验的设计包和受限变更合同为依据；测试执行结果须有原始证据。
 The repository includes a simulation-only ROS 2 package. It has no hardware drivers, product recommendations, real configuration, or permission to actuate physical hardware. Examples are synthetic and physical output is disabled by default.
 
 Before starting a new architecture, use `open-source-architecture-research` to inspect the current
@@ -11,7 +11,8 @@ clone code or choose products.
 
 ## Quick start / 快速开始
 
-1. Select **Use this template** on GitHub.
+1. Clone this repository. The upstream repository's GitHub template setting was not enabled
+   when last checked; use **Use this template** only after the owner enables it.
 2. Copy a synthetic DesignBrief from `examples/` and replace it with verified project facts only.
 3. Validate the brief, invoke the Skills in sequence, and validate the final package.
 4. Review `contracts/README.md`, `docs/reference/`, and the documented safety gate before any implementation work.
@@ -44,15 +45,20 @@ ros2 topic echo /sim/odom
 
 The gate starts latched, so the reset succeeds only after the synthetic status inputs are fresh and clear. Stop the request publisher; its 0.25-second timeout makes the next gate publication zero. To inject a fault, run `ros2 param set /sim/sim_environment emergency_stop true`. Clear it with `ros2 param set /sim/sim_environment emergency_stop false`, then call `ros2 service call /sim/reset_estop std_srvs/srv/Trigger '{}'` and publish a fresh request. A restarted gate also requires reset. The same parameter interface exposes `health_ok` and `obstacle_clear`. See [simulation contract](docs/reference/ros2-simulation.md) for exact topic, timeout, fault, and evidence boundaries.
 
-Run the offline suite with `bash scripts/run-checks.sh`. In a Jazzy environment, run `python3 -m pytest -q src/robotics_sim/test/test_*.py --junitxml=build/robotics_sim/test_results/robotics_sim/pytest.xml` after sourcing `install/setup.bash`, then validate the JUnit evidence as described in `contracts/README.md`. CI builds the package, tests the ROS graph and installed launch, and stores JUnit results.
+Run `bash scripts/run-checks.sh` for the repository checks and, on a host with ROS 2 Jazzy,
+`bash scripts/run-ros-checks.sh` for the simulation build, graph tests, JUnit trace check,
+and test-result inspection. Both scripts write raw logs and a bound manifest under the
+ignored `artifacts/<run-id>/` directory. CI uses the same scripts and uploads their
+available results, including JUnit. See [contracts](contracts/README.md) for evidence limits.
 
 ## Structure
 
 ```text
 .
-├── .agents/skills/        # Five design Skills plus architecture research
-├── contracts/             # Versioned DesignBrief and DesignPackage schemas
-├── evals/                 # Positive and safety-blocking Skill cases
+├── .agents/skills/        # Design, bounded implementation, and review Skills
+├── changes/               # Bounded ChangeContracts for candidate changes
+├── contracts/             # Versioned design and change schemas
+├── evals/                 # Contract fixtures and unrun workflow case definitions
 ├── examples/              # Synthetic validated design packages
 ├── config/
 │   ├── example/           # Safe, shareable defaults
@@ -78,7 +84,8 @@ Run the offline suite with `bash scripts/run-checks.sh`. In a Jazzy environment,
 3. Run system design, navigation, hardware, safety, and verification Skills / 按顺序运行五个 Skill。
 4. Validate the DesignPackage and keep uncertainties as blockers or open decisions / 校验设计包，保留不确定性。
 5. Implement only after simulation, fake transport, or replay evidence is planned / 先规划仿真、虚拟传输或回放证据。
-6. Update architecture decisions and working memory / 更新架构决策与工作记忆。
+6. Write a ChangeContract, run the shared checks, and review the exact diff and evidence / 为单次变更声明范围、执行检查并复核证据。
+7. Update architecture decisions and working memory / 更新架构决策与工作记忆。
 
 ## Model-free policy
 
@@ -95,17 +102,15 @@ Run the offline suite with `bash scripts/run-checks.sh`. In a Jazzy environment,
 
 ## Validate / 校验
 
-```text
-python tools/validate_template.py
-python tools/validate_skills.py
-python tools/validate_evals.py
-python tools/validate_public_content.py
-python -m unittest discover -s tests/unit -p "test_*.py"
-python -m ruff check tools src/robotics_sim tests/unit/test_design_contracts.py tests/unit/test_sim_core.py
-yamllint --config-file .yamllint.yaml .
-pymarkdown --config .pymarkdown.json scan .
-shellcheck scripts/*.sh
+```bash
+python3 -m pip install --requirement requirements-dev.txt
+bash scripts/run-checks.sh
+bash scripts/run-ros-checks.sh  # ROS 2 Jazzy host or CI container only
 ```
+
+The last command runs simulated ROS nodes only. OCR review is optional and read-only;
+it is never a substitute for the deterministic checks or human acceptance. See
+[delivery gates](docs/reference/github-delivery-gates.md) before changing GitHub settings.
 
 ## License / 许可证
 

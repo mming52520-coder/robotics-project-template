@@ -9,7 +9,6 @@ from pathlib import Path
 from tools.public_content import scan_public_content
 from tools.validate_skills import validate_skill_tree
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 

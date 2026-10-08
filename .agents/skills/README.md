@@ -26,3 +26,9 @@ Additional focused project-level Agent Skills use this layout:
 ```
 
 Every Skill must have a valid `SKILL.md`, a single clear responsibility, explicit safety boundaries, and evaluation cases appropriate to its behavior. Public Skills and examples must remain free of hardware identities, private data, and credentials.
+
+For a bounded code change based on an existing validated design, use
+`robotics-change-plan` to state scope, `robotics-bounded-implementation` to change
+only that scope and run checks, then `robotics-evidence-review` for a read-only
+review of the diff and evidence. These three Skills do not replace the five design
+Skills when the design itself changes. None of their files can record human approval.

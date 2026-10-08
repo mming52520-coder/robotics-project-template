@@ -69,7 +69,9 @@
           "id",
           "source",
           "statement",
-          "status"
+          "status",
+          "scope",
+          "acceptance"
         ],
         "properties": {
           "id": {
@@ -87,6 +89,12 @@
               "planned",
               "implemented"
             ]
+          },
+          "scope": {
+            "$ref": "#/$defs/text"
+          },
+          "acceptance": {
+            "$ref": "#/$defs/text"
           }
         }
       }
@@ -344,6 +352,7 @@
               "id",
               "requirement_ids",
               "level",
+              "preconditions",
               "scenario",
               "acceptance",
               "evidence",
@@ -381,6 +390,9 @@
                 ]
               },
               "test_node": {
+                "$ref": "#/$defs/text"
+              },
+              "preconditions": {
                 "$ref": "#/$defs/text"
               }
             },
@@ -453,7 +465,31 @@
     "open_decisions": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/text"
+        "type": "object",
+        "required": [
+          "id",
+          "statement",
+          "blocks_implementation",
+          "requirement_ids",
+          "closure_evidence"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "statement": {
+            "$ref": "#/$defs/text"
+          },
+          "blocks_implementation": {
+            "type": "boolean"
+          },
+          "requirement_ids": {
+            "$ref": "#/$defs/ids"
+          },
+          "closure_evidence": {
+            "$ref": "#/$defs/text"
+          }
+        }
       }
     }
   },

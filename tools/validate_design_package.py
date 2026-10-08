@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a DesignBrief and DesignPackage pair without third-party dependencies."""
+"""Validate a DesignBrief and versioned DesignPackage with JSON Schema."""
 
 from __future__ import annotations
 
@@ -12,12 +12,14 @@ try:
         validate_design_brief,
         validate_design_package,
         validate_junit_evidence,
+        validate_legacy_design_package,
     )
 except ImportError:  # Direct script execution has no package context.
     from design_contracts import (
         validate_design_brief,
         validate_design_package,
         validate_junit_evidence,
+        validate_legacy_design_package,
     )
 
 
@@ -33,13 +35,22 @@ def main() -> int:
     parser.add_argument(
         "--evidence", type=Path, help="verify implemented checks in a JUnit XML file"
     )
+    parser.add_argument(
+        "--legacy-design-only", action="store_true",
+        help="validate a v1 package only as a design artifact, without implementation status",
+    )
     args = parser.parse_args()
+    if args.legacy_design_only and args.evidence:
+        parser.error("--legacy-design-only cannot accept implementation evidence")
 
     brief = load_json(args.brief)
     brief_errors = validate_design_brief(brief)
     if args.package:
         package = load_json(args.package)
-        errors = validate_design_package(package, brief)
+        errors = (
+            validate_legacy_design_package(package, brief)
+            if args.legacy_design_only else validate_design_package(package, brief)
+        )
         if args.evidence:
             plan = package.get("verification_plan") if isinstance(package, dict) else None
             checks = plan.get("checks", []) if isinstance(plan, dict) else []
@@ -59,7 +70,10 @@ def main() -> int:
         for error in errors:
             print(error)
         return 1
-    print("design contract validation passed")
+    if args.legacy_design_only:
+        print("legacy v1 design-only validation passed; implementation is not qualified")
+    else:
+        print("design contract validation passed")
     return 0
 
 

@@ -12,6 +12,10 @@
 - Before selecting a new reference architecture, run the open-source architecture research Skill and
   retain its sources, open decisions, and license boundary.
 - Preserve confirmed, inferred, and open statements separately in every DesignPackage.
+- Use a ChangeContract to bound implementation scope and tests; a contract file never proves
+  human approval. Keep implementation, evidence review, and final delivery decisions distinct.
+- Treat changes to schemas, validators, CI, test assertions, and review policy as core-chain
+  changes needing full checks and an independent human review of the candidate diff.
 
 ## Safety boundary
 

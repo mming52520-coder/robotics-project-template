@@ -1,0 +1,7 @@
+{
+  "id": "workflow-stale-evidence",
+  "kind": "workflow-negative",
+  "scenario": "A report claims PASS using JUnit from an earlier code snapshot after the source or tests changed.",
+  "expected_decision": "block",
+  "agent_run_status": "not_run"
+}

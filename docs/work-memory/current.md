@@ -11,9 +11,11 @@ architecture-research Skill, synthetic examples, deterministic evaluation cases,
 safety checks. The current work adds a ROS 2 Jazzy simulation slice for the validated synthetic
 `warehouse-tote` example, with a safety gate, fake base, synthetic fault inputs, and a separate
 ROS runtime CI gate. The PR #18 acceptance worktree proposes DesignPackage v2 and a fail-closed
-gate restart; four ROS tests and their JUnit links passed locally in Jazzy on this candidate
-candidate. Fresh candidate GitHub CI remains pending. This is a starting point, not a complete
-navigation system.
+gate restart; four ROS tests and their JUnit links passed locally in Jazzy on that candidate.
+The separate `codex/ai-delivery-chain` worktree proposes a bounded ChangeContract, shared
+offline and ROS evidence, three delivery Skills, and optional read-only OCR review. Local
+offline and Jazzy checks passed on this local candidate; fresh GitHub CI remains
+pending. This is a starting point, not a complete navigation system.
 
 ## Evidence
 
@@ -28,6 +30,10 @@ navigation system.
 - Acceptance worktree: 40 offline unit tests, four local Jazzy ROS tests, JUnit trace validation,
   and repository CI lint scopes passed. The exact results and remaining merge gates are in
   `docs/acceptance/pr18-engineering-acceptance.md`.
+- AI delivery candidate: 51 offline unit tests, contract and public-content checks, Ruff,
+  YAML, Markdown, ShellCheck, four Jazzy ROS tests, and JUnit requirement links passed
+  locally. Raw logs and manifests are in ignored `artifacts/`; the candidate report is
+  `docs/acceptance/ai-delivery-chain.md`. These results do not establish remote CI status.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
 - GitHub Actions for PR #18 at `1b23621`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
 
@@ -36,11 +42,16 @@ navigation system.
 ADR-0001 selects versioned JSON contracts, model-free public outputs, ROS 2 reference architecture, and simulation-first safety gates.
 ADR-0003 records the simulation runtime scope and reference-project evidence boundary.
 ADR-0004 proposes the versioned DesignPackage v2 upgrade and bidirectional trace requirement.
+ADR-0005 proposes bounded changes and execution evidence, with `jsonschema` as a
+development validator dependency and optional read-only OCR review.
 
 ## Blockers
 
 Real robot requirements, localization, navigation, sensor integration, calibration, electrical design approval, and physical trial authorization remain project-specific and must stay outside this public template until independently specified and verified.
 The acceptance worktree additionally requires fresh GitHub CI with uploaded JUnit evidence before merge.
+The AI delivery candidate also needs trusted-base inspection of its validators, Schemas,
+CI, review rule, and tests. OCR CLI and Agent behavior evaluation were not run locally;
+GitHub ruleset and repository-template settings were not changed.
 
 ## Next Actions
 
@@ -53,7 +64,10 @@ The acceptance worktree additionally requires fresh GitHub CI with uploaded JUni
 
 ## Verification
 
-Run `scripts/run-checks.sh` and repository lint checks. For ROS 2, build with Jazzy, source the installed workspace, run `python3 -m pytest -q src/robotics_sim/test/test_*.py --junitxml=build/robotics_sim/test_results/robotics_sim/pytest.xml`, verify the JUnit links with `tools/validate_design_package.py --evidence`, and inspect `colcon test-result`. Do not claim a physical safety result from a template or simulation check.
+Run `bash scripts/run-checks.sh` and, on a Jazzy host, `bash scripts/run-ros-checks.sh`.
+These scripts create snapshot-bound manifests and raw logs. Validate each manifest with
+`python3 tools/evidence.py validate artifacts/<run-id>`. Do not claim a physical safety
+result from a template or simulation check.
 
 ## Risks
 

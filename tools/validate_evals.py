@@ -79,7 +79,7 @@ def validate_eval_document(document: object, repo_root: Path) -> list[str]:
 
 
 def validate_eval_suite(evals_root: Path, repo_root: Path) -> list[str]:
-    """Validate the three positive and three negative public evaluation cases."""
+    """Validate six design fixtures and separately grouped workflow case definitions."""
     cases = sorted((evals_root / "cases").glob("*.json"))
     if len(cases) != 6:
         return ["evaluation suite must contain exactly six cases"]
@@ -98,6 +98,26 @@ def validate_eval_suite(evals_root: Path, repo_root: Path) -> list[str]:
         errors.extend(f"{path.name}: {error}" for error in document_errors)
     if kinds.count("positive") != 3 or kinds.count("negative") != 3:
         errors.append("evaluation suite must contain three positive and three negative cases")
+    workflow_cases = sorted((evals_root / "workflow-cases").glob("*.json"))
+    if not workflow_cases:
+        errors.append("workflow evaluation group must contain at least one case")
+    for path in workflow_cases:
+        document = _load_json(path)
+        if not isinstance(document, Mapping):
+            errors.append(f"{path.name}: workflow case must be an object")
+            continue
+        identifier = document.get("id")
+        if not isinstance(identifier, str) or not identifier.strip() or identifier in identifiers:
+            errors.append(f"{path.name}: workflow id must be non-empty and unique")
+        identifiers.add(str(identifier))
+        if document.get("kind") != "workflow-negative":
+            errors.append(f"{path.name}: kind must be workflow-negative")
+        if not isinstance(document.get("scenario"), str) or not document["scenario"].strip():
+            errors.append(f"{path.name}: scenario must be non-empty")
+        if document.get("expected_decision") != "block":
+            errors.append(f"{path.name}: expected decision must be block")
+        if document.get("agent_run_status") != "not_run":
+            errors.append(f"{path.name}: fixture cannot claim an Agent run result")
     return errors
 
 
@@ -111,7 +131,7 @@ def main() -> int:
         for error in errors:
             print(error)
         return 1
-    print("evaluation validation passed")
+    print("evaluation fixtures validated; Agent behavior was not run")
     return 0
 
 

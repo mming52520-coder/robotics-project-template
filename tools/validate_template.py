@@ -31,7 +31,7 @@ REQUIRED_PATHS = (
     "tests/replay/README.md",
     "evals/cases/01-warehouse-tote.json",
 )
-EXCLUDED_PARTS = {".git", ".venv", "__pycache__"}
+EXCLUDED_PARTS = {".git", ".venv", "__pycache__", "artifacts", "build", "install", "log"}
 SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),

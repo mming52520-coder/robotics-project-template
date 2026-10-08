@@ -1,0 +1,14 @@
+{
+  "change_id": "example-change",
+  "design_package_ref": "examples/warehouse-tote/design-package.json",
+  "design_package_sha256": "REPLACE_WITH_ACTUAL_SHA256",
+  "base_revision": "REPLACE_WITH_ACTUAL_FULL_COMMIT_SHA",
+  "objective": "Describe the one bounded change.",
+  "in_scope": ["Name the behavior to change."],
+  "out_of_scope": ["Name adjacent behavior excluded from this change."],
+  "allowed_paths": ["tools/*.py"],
+  "affected_requirement_ids": ["REQ-SIM-STOP"],
+  "invariants": ["Safety gate remains fail-closed."],
+  "required_test_ids": ["T-SIM-GRAPH"],
+  "stop_conditions": ["Stop if the safety invariant changes."]
+}

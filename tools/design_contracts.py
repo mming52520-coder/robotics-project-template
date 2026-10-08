@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import ast
+import json
 import math
 import re
 import xml.etree.ElementTree as ET
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
+
+from jsonschema import Draft202012Validator
 
 BRIEF_REQUIRED = (
     "schema_version", "brief_id", "mission", "operating_environment",
@@ -22,6 +25,16 @@ PACKAGE_REQUIRED = (
 MODEL_FREE_FIELDS = {"model", "vendor", "manufacturer", "part_number", "serial_number"}
 ROOT = Path(__file__).resolve().parents[1]
 ID_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
+
+
+def _schema_errors(document: object, name: str) -> list[str]:
+    schema = json.loads((ROOT / "contracts" / name).read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+    violations = Draft202012Validator(schema).iter_errors(document)
+    return sorted(
+        f"{'/'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
+        for error in violations
+    )
 
 
 def _mapping(value: Any) -> bool:
@@ -263,6 +276,11 @@ def validate_design_package(package: object, brief: object, root: Path = ROOT) -
         return [f"invalid design brief: {error}" for error in brief_errors]
     if not _mapping(package):
         return ["design package must be an object"]
+    if package.get("schema_version") != "v2":
+        return ["schema_version must be v2"]
+    schema_errors = _schema_errors(package, "design-package.schema.json")
+    if schema_errors:
+        return schema_errors
     errors = _required_errors(package, PACKAGE_REQUIRED)
     if errors:
         return errors
@@ -318,7 +336,9 @@ def validate_design_package(package: object, brief: object, root: Path = ROOT) -
             if not _mapping(item):
                 errors.append(f"{path} must be an object")
                 continue
-            errors.extend(_text_fields(item, ("id", "source", "statement"), path))
+            errors.extend(_text_fields(
+                item, ("id", "source", "statement", "scope", "acceptance"), path
+            ))
             req_id = item.get("id")
             if _nonempty_text(req_id):
                 if not ID_PATTERN.fullmatch(req_id):
@@ -431,7 +451,8 @@ def validate_design_package(package: object, brief: object, root: Path = ROOT) -
                     errors.append(f"{path} must be an object")
                     continue
                 errors.extend(_text_fields(
-                    item, ("id", "level", "scenario", "acceptance", "evidence"), path
+                    item, ("id", "level", "preconditions", "scenario", "acceptance", "evidence"),
+                    path,
                 ))
                 if item.get("status") not in ("planned", "implemented"):
                     errors.append(f"{path}.status must be planned or implemented")
@@ -455,9 +476,26 @@ def validate_design_package(package: object, brief: object, root: Path = ROOT) -
     if not _list(package["open_decisions"]):
         errors.append("open_decisions must be a list")
     else:
+        decision_ids: set[str] = set()
         for index, item in enumerate(package["open_decisions"]):
-            if not _nonempty_text(item):
-                errors.append(f"open_decisions[{index}] must be non-empty")
+            path = f"open_decisions[{index}]"
+            if not _mapping(item):
+                errors.append(f"{path} must be an object")
+                continue
+            errors.extend(_text_fields(item, ("id", "statement", "closure_evidence"), path))
+            decision_id = item.get("id")
+            if _nonempty_text(decision_id):
+                if decision_id in decision_ids:
+                    errors.append(f"{path}.id must be unique")
+                decision_ids.add(decision_id)
+            errors.extend(_text_list(item.get("requirement_ids"), f"{path}.requirement_ids"))
+            for req_id in item.get("requirement_ids", []):
+                if req_id not in requirements:
+                    errors.append(f"{path}.requirement_ids contains an unknown requirement")
+                elif item.get("blocks_implementation") and (
+                    requirements[req_id].get("status") == "implemented"
+                ):
+                    errors.append(f"{path} blocks implemented requirement {req_id}")
     errors.extend(_model_free_errors(package["hardware_functional_plan"],
                                      "hardware_functional_plan"))
     for req_id in requirements:
@@ -466,6 +504,29 @@ def validate_design_package(package: object, brief: object, root: Path = ROOT) -
         if not any(req_id in check.get("requirement_ids", []) for check in checks.values()):
             errors.append(f"requirement {req_id} needs a verification check")
     errors.extend(_trace_errors(package, requirements, design_links, interface_names, checks, root))
+    return errors
+
+
+def validate_legacy_design_package(package: object, brief: object) -> list[str]:
+    """Validate v1 only as a design artifact, never as implementation evidence."""
+    brief_errors = validate_design_brief(brief)
+    if brief_errors:
+        return [f"invalid design brief: {error}" for error in brief_errors]
+    if not _mapping(package) or package.get("schema_version") != "v1":
+        return ["legacy design package must be a v1 object"]
+    errors = _schema_errors(package, "design-package.v1.schema.json")
+    if package.get("brief_id") != brief["brief_id"]:
+        errors.append("brief_id must match the design brief")
+    safety = package.get("safety_plan")
+    if _mapping(safety):
+        if safety.get("physical_output") != "disabled_by_default":
+            errors.append("safety_plan.physical_output must be disabled_by_default")
+        errors.extend(_text_fields(
+            safety, ("control_authority", "stop_behavior", "watchdog", "fault_recovery"),
+            "safety_plan",
+        ))
+    errors.extend(_model_free_errors(package.get("hardware_functional_plan"),
+                                     "hardware_functional_plan"))
     return errors
 
 

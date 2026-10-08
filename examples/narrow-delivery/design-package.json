@@ -110,12 +110,21 @@
         "scenario": "Inject stale or failed inputs with fake transports",
         "acceptance": "Motion is inhibited and evidence identifies the fault",
         "evidence": "Future simulation JUnit",
-        "status": "planned"
+        "status": "planned",
+        "preconditions": "Stale-input fixture and fake transport must be defined before execution."
       }
     ]
   },
   "open_decisions": [
-    "Measure route clearance before physical trials."
+    {
+      "id": "DEC-ROUTE-CLEARANCE",
+      "statement": "Measure route clearance before physical trials.",
+      "blocks_implementation": true,
+      "requirement_ids": [
+        "REQ-PLAN-NAV"
+      ],
+      "closure_evidence": "Measured route-clearance record approved before physical integration."
+    }
   ],
   "traceability": [],
   "requirements": [
@@ -123,13 +132,17 @@
       "id": "REQ-PLAN-NAV",
       "source": "/required_capabilities/2",
       "statement": "Plan navigation for narrow routes.",
-      "status": "planned"
+      "status": "planned",
+      "scope": "design-only; not implemented",
+      "acceptance": "A future blocked-route simulation requests zero motion and records the blockage."
     },
     {
       "id": "REQ-PLAN-OBS",
       "source": "/required_capabilities/3",
       "statement": "Specify obstacle-stop observation.",
-      "status": "planned"
+      "status": "planned",
+      "scope": "design-only; not implemented",
+      "acceptance": "A future obstacle fault simulation inhibits motion and identifies the fault."
     }
   ]
 }

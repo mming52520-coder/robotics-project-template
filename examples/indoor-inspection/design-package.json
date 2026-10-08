@@ -113,12 +113,21 @@
         "scenario": "Inject stale or failed inputs with fake transports",
         "acceptance": "Motion is inhibited and evidence identifies the fault",
         "evidence": "Future simulation JUnit",
-        "status": "planned"
+        "status": "planned",
+        "preconditions": "Stale-input fixture and fake transport must be defined before execution."
       }
     ]
   },
   "open_decisions": [
-    "Define the operator progress display outside the motion-control boundary."
+    {
+      "id": "DEC-OPERATOR-DISPLAY",
+      "statement": "Define the operator progress display outside the motion-control boundary.",
+      "blocks_implementation": false,
+      "requirement_ids": [
+        "REQ-PLAN-ROUTE"
+      ],
+      "closure_evidence": "Reviewed operator display requirement and interface design."
+    }
   ],
   "traceability": [],
   "requirements": [
@@ -126,13 +135,17 @@
       "id": "REQ-PLAN-ROUTE",
       "source": "/required_capabilities/1",
       "statement": "Plan a bounded inspection route.",
-      "status": "planned"
+      "status": "planned",
+      "scope": "design-only; not implemented",
+      "acceptance": "A future bounded-route simulation remains inside reviewed inspection bounds."
     },
     {
       "id": "REQ-PLAN-HEALTH",
       "source": "/required_capabilities/3",
       "statement": "Specify diagnostic degradation.",
-      "status": "planned"
+      "status": "planned",
+      "scope": "design-only; not implemented",
+      "acceptance": "A future diagnostic fault simulation inhibits motion and identifies the fault."
     }
   ]
 }

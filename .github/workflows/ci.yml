@@ -13,9 +13,15 @@ jobs:
   validate-template:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      EVIDENCE_RUN_ID: offline-${{ github.run_id }}-${{ github.run_attempt }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -26,46 +32,48 @@ jobs:
       - name: Install validation tools
         run: python -m pip install --requirement requirements-dev.txt
 
-      - name: Validate structure and safety defaults
-        run: python tools/validate_template.py
-
-      - name: Validate design contracts and Skills
+      - name: Run deterministic repository checks
         run: bash scripts/run-checks.sh
 
-      - name: Check Python
-        run: python -m ruff check tools src/robotics_sim tests/unit/test_design_contracts.py tests/unit/test_sim_core.py
+      - name: Verify repository evidence
+        run: python tools/evidence.py validate "artifacts/${EVIDENCE_RUN_ID}"
 
-      - name: Check YAML
-        run: yamllint --config-file .yamllint.yaml .
-
-      - name: Check Markdown
-        run: pymarkdown --config .pymarkdown.json scan .
-
-      - name: Check shell
-        run: shellcheck scripts/*.sh
+      - name: Preserve repository evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-check-evidence
+          path: artifacts/
+          if-no-files-found: warn
 
   ros2-simulation:
     runs-on: ubuntu-latest
     container: ros:jazzy-ros-base
     timeout-minutes: 15
+    env:
+      EVIDENCE_RUN_ID: ros-${{ github.run_id }}-${{ github.run_attempt }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      ROS_CONTAINER_IMAGE: ros:jazzy-ros-base
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install contract validator
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3-jsonschema
 
       - name: Build and test ROS 2 simulation
         shell: bash
-        run: |
-          set -eo pipefail
-          source /opt/ros/jazzy/setup.bash
-          colcon build --packages-select robotics_sim
-          source install/setup.bash
-          python3 -m pytest -q src/robotics_sim/test/test_*.py \
-            --junitxml=build/robotics_sim/test_results/robotics_sim/pytest.xml
-          python3 tools/validate_design_package.py \
-            examples/warehouse-tote/design-brief.json \
-            examples/warehouse-tote/design-package.json \
-            --evidence build/robotics_sim/test_results/robotics_sim/pytest.xml
-          colcon test-result --verbose
+        run: bash scripts/run-ros-checks.sh
+
+      - name: Verify ROS 2 evidence
+        shell: bash
+        run: python3 tools/evidence.py validate "artifacts/${EVIDENCE_RUN_ID}"
 
       - name: Preserve ROS 2 test evidence
         if: always()
@@ -73,6 +81,7 @@ jobs:
         with:
           name: ros2-simulation-logs
           path: |
+            artifacts/
             log/
             build/robotics_sim/test_results/robotics_sim/pytest.xml
           if-no-files-found: warn

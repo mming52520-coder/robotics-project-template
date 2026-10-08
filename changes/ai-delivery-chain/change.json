@@ -1,0 +1,61 @@
+{
+  "change_id": "ai-delivery-chain",
+  "design_package_ref": "examples/warehouse-tote/design-package.json",
+  "design_package_sha256": "ec1cc69ace899fa7a1f9f478ce58b3fe3ad146d3cc6bd0efbb3404feb2d8c5a0",
+  "base_revision": "c41341f8d586fe03ab5b355a921ec84aafbca79f",
+  "objective": "Bind a bounded AI-assisted repository change to design requirements, executable checks, immutable test evidence, and read-only review.",
+  "in_scope": [
+    "Versioned design-only compatibility and v2 implementation readiness checks",
+    "A scoped ChangeContract and deterministic local/CI evidence manifests",
+    "Repository Skills and optional read-only review handoff",
+    "Repository-side PR and governance documentation"
+  ],
+  "out_of_scope": [
+    "ROS control behavior, physical devices, production parameters, and hardware output",
+    "Automatic model-driven source repair, commit, push, merge, or release",
+    "Live GitHub ruleset changes before candidate CI is verified"
+  ],
+  "allowed_paths": [
+    ".gitignore",
+    "AGENTS.md",
+    "requirements-dev.txt",
+    ".github/workflows/ci.yml",
+    ".github/pull_request_template.md",
+    ".github/ISSUE_TEMPLATE/**",
+    ".agents/skills/**",
+    ".opencodereview/**",
+    "contracts/**",
+    "tools/**",
+    "scripts/**",
+    "tests/unit/**",
+    "evals/**",
+    "examples/*/design-package.json",
+    "changes/**",
+    "docs/**",
+    "README.md"
+  ],
+  "affected_requirement_ids": [
+    "REQ-SIM-BOUND",
+    "REQ-SIM-STOP",
+    "REQ-SIM-ESTOP",
+    "REQ-SIM-FAULT",
+    "REQ-SIM-RESTART",
+    "REQ-SIM-FAKE"
+  ],
+  "invariants": [
+    "SafetyGate stays fail-closed at startup and after restart.",
+    "Physical output remains disabled and all motion tests use only fake ROS nodes.",
+    "No AI-authored file or JSON field is treated as human approval."
+  ],
+  "required_test_ids": [
+    "T-SIM-START",
+    "T-SIM-GRAPH",
+    "T-SIM-RESTART",
+    "T-SIM-PROC-RESTART"
+  ],
+  "stop_conditions": [
+    "A diff touches a path outside allowed_paths or changes a safety invariant.",
+    "An implemented requirement lacks a passing required test in current JUnit evidence.",
+    "Evidence is missing, stale, skipped, or bound to a different code snapshot."
+  ]
+}
