@@ -8,9 +8,17 @@ import json
 from pathlib import Path
 
 try:
-    from .design_contracts import validate_design_brief, validate_design_package
+    from .design_contracts import (
+        validate_design_brief,
+        validate_design_package,
+        validate_junit_evidence,
+    )
 except ImportError:  # Direct script execution has no package context.
-    from design_contracts import validate_design_brief, validate_design_package
+    from design_contracts import (
+        validate_design_brief,
+        validate_design_package,
+        validate_junit_evidence,
+    )
 
 
 def load_json(path: Path) -> object:
@@ -22,13 +30,31 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("brief", type=Path)
     parser.add_argument("package", nargs="?", type=Path)
+    parser.add_argument(
+        "--evidence", type=Path, help="verify implemented checks in a JUnit XML file"
+    )
     args = parser.parse_args()
 
-    brief_errors = validate_design_brief(load_json(args.brief))
+    brief = load_json(args.brief)
+    brief_errors = validate_design_brief(brief)
     if args.package:
-        errors = validate_design_package(load_json(args.package), load_json(args.brief))
+        package = load_json(args.package)
+        errors = validate_design_package(package, brief)
+        if args.evidence:
+            plan = package.get("verification_plan") if isinstance(package, dict) else None
+            checks = plan.get("checks", []) if isinstance(plan, dict) else []
+            expected = {
+                check.get("evidence") for check in checks
+                if isinstance(check, dict) and check.get("status") == "implemented"
+            } if isinstance(checks, list) else set()
+            if expected != {str(args.evidence)}:
+                errors.append("--evidence must match the implemented checks' evidence artifact")
+            elif not errors:
+                errors.extend(validate_junit_evidence(package, args.evidence))
     else:
         errors = brief_errors
+        if args.evidence:
+            errors.append("--evidence requires a DesignPackage")
     if errors:
         for error in errors:
             print(error)

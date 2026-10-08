@@ -15,6 +15,10 @@ All notable changes follow semantic versioning.
 
 ### Added
 
+- DesignPackage v2 with required interface, safety, verification, and bidirectional
+  requirement-to-evidence links; all synthetic packages migrated from v1.
+- Simulation gate startup and restart fail closed until an explicit safe reset.
+- JUnit evidence verification for implemented ROS checks.
 - Public open-source architecture research Skill with local project inspection, high-star candidate
   scoring, source evidence, rate-limit fallback, and a no-code-copy boundary.
 - Simulation-only ROS 2 Jazzy package with bounded motion gating, a fake base, synthetic fault

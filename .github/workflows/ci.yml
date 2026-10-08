@@ -33,7 +33,7 @@ jobs:
         run: bash scripts/run-checks.sh
 
       - name: Check Python
-        run: python -m ruff check tools src/robotics_sim tests/unit/test_sim_core.py
+        run: python -m ruff check tools src/robotics_sim tests/unit/test_design_contracts.py tests/unit/test_sim_core.py
 
       - name: Check YAML
         run: yamllint --config-file .yamllint.yaml .
@@ -61,6 +61,10 @@ jobs:
           source install/setup.bash
           python3 -m pytest -q src/robotics_sim/test/test_*.py \
             --junitxml=build/robotics_sim/test_results/robotics_sim/pytest.xml
+          python3 tools/validate_design_package.py \
+            examples/warehouse-tote/design-brief.json \
+            examples/warehouse-tote/design-package.json \
+            --evidence build/robotics_sim/test_results/robotics_sim/pytest.xml
           colcon test-result --verbose
 
       - name: Preserve ROS 2 test evidence
@@ -68,5 +72,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ros2-simulation-logs
-          path: log/
+          path: |
+            log/
+            build/robotics_sim/test_results/robotics_sim/pytest.xml
           if-no-files-found: warn

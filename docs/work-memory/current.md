@@ -10,29 +10,37 @@ Verified: v0.2 provides versioned design contracts, five focused design Skills, 
 architecture-research Skill, synthetic examples, deterministic evaluation cases, and public-content
 safety checks. The current work adds a ROS 2 Jazzy simulation slice for the validated synthetic
 `warehouse-tote` example, with a safety gate, fake base, synthetic fault inputs, and a separate
-ROS runtime CI gate. This is a starting point, not a complete navigation system.
+ROS runtime CI gate. The PR #18 acceptance worktree proposes DesignPackage v2 and a fail-closed
+gate restart; four ROS tests and their JUnit links passed locally in Jazzy on this candidate
+candidate. Fresh candidate GitHub CI remains pending. This is a starting point, not a complete
+navigation system.
 
 ## Evidence
 
-- `contracts/` defines the v1 DesignBrief and DesignPackage boundary.
+- `contracts/` defines the v1 DesignBrief and proposed v2 DesignPackage boundary.
 - `.agents/skills/` contains the ordered design workflow.
 - `open-source-architecture-research` inspects public project facts, ranks public candidates, and
   records evidence without copying code or using credentials.
 - `examples/` and `evals/` contain synthetic positive and safety-blocking cases.
 - `src/robotics_sim/` implements only simulated motion and publishes synthetic odometry.
-- Offline `scripts/run-checks.sh`: 33 unit tests passed. Ruff, YAML, Markdown, shell, and public-content checks passed.
-- Jazzy container: `colcon build --packages-select robotics_sim` passed; two ROS graph and installed-launch tests passed with JUnit results and `colcon test-result` showing 2 tests, 0 failures.
+- PR #18 baseline `1b23621`: 33 offline unit tests passed; Ruff, YAML, Markdown, shell, and public-content checks passed.
+- PR #18 baseline Jazzy CI: `colcon build --packages-select robotics_sim` passed; two ROS graph and installed-launch tests passed with JUnit results and `colcon test-result` showing 2 tests, 0 failures.
+- Acceptance worktree: 40 offline unit tests, four local Jazzy ROS tests, JUnit trace validation,
+  and repository CI lint scopes passed. The exact results and remaining merge gates are in
+  `docs/acceptance/pr18-engineering-acceptance.md`.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
-- GitHub Actions for PR #18 at `4a5368c`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
+- GitHub Actions for PR #18 at `1b23621`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
 
 ## Decisions
 
 ADR-0001 selects versioned JSON contracts, model-free public outputs, ROS 2 reference architecture, and simulation-first safety gates.
 ADR-0003 records the simulation runtime scope and reference-project evidence boundary.
+ADR-0004 proposes the versioned DesignPackage v2 upgrade and bidirectional trace requirement.
 
 ## Blockers
 
 Real robot requirements, localization, navigation, sensor integration, calibration, electrical design approval, and physical trial authorization remain project-specific and must stay outside this public template until independently specified and verified.
+The acceptance worktree additionally requires fresh GitHub CI with uploaded JUnit evidence before merge.
 
 ## Next Actions
 
@@ -45,7 +53,7 @@ Real robot requirements, localization, navigation, sensor integration, calibrati
 
 ## Verification
 
-Run `scripts/run-checks.sh` and repository lint checks. For ROS 2, build with Jazzy, source the installed workspace, run `python3 -m pytest -q src/robotics_sim/test/test_*.py`, and inspect `colcon test-result`. Do not claim a physical safety result from a template or simulation check.
+Run `scripts/run-checks.sh` and repository lint checks. For ROS 2, build with Jazzy, source the installed workspace, run `python3 -m pytest -q src/robotics_sim/test/test_*.py --junitxml=build/robotics_sim/test_results/robotics_sim/pytest.xml`, verify the JUnit links with `tools/validate_design_package.py --evidence`, and inspect `colcon test-result`. Do not claim a physical safety result from a template or simulation check.
 
 ## Risks
 

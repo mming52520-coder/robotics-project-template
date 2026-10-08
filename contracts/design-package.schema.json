@@ -1,29 +1,490 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "DesignPackage v1",
+  "title": "DesignPackage v2",
   "type": "object",
   "required": [
     "schema_version",
     "brief_id",
     "assumptions",
+    "requirements",
     "system_architecture",
     "interfaces",
     "algorithm_plan",
     "hardware_functional_plan",
     "safety_plan",
     "verification_plan",
+    "traceability",
     "open_decisions"
   ],
   "properties": {
-    "schema_version": {"const": "v1"},
-    "brief_id": {"type": "string", "minLength": 1},
-    "assumptions": {"type": "array"},
-    "system_architecture": {"type": "object"},
-    "interfaces": {"type": "array", "minItems": 1},
-    "algorithm_plan": {"type": "array", "minItems": 1},
-    "hardware_functional_plan": {"type": "array", "minItems": 1},
-    "safety_plan": {"type": "object"},
-    "verification_plan": {"type": "object"},
-    "open_decisions": {"type": "array"}
+    "schema_version": {
+      "const": "v2"
+    },
+    "brief_id": {
+      "$ref": "#/$defs/text"
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "statement",
+          "status"
+        ],
+        "properties": {
+          "statement": {
+            "$ref": "#/$defs/text"
+          },
+          "status": {
+            "enum": [
+              "confirmed",
+              "inferred",
+              "open"
+            ]
+          },
+          "evidence": {
+            "$ref": "#/$defs/text"
+          }
+        },
+        "if": {
+          "properties": {
+            "status": {
+              "const": "confirmed"
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "evidence"
+          ]
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "statement",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^/"
+          },
+          "statement": {
+            "$ref": "#/$defs/text"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "implemented"
+            ]
+          }
+        }
+      }
+    },
+    "system_architecture": {
+      "type": "object",
+      "required": [
+        "reference",
+        "components"
+      ],
+      "properties": {
+        "reference": {
+          "const": "ros2"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "responsibility"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/text"
+              },
+              "responsibility": {
+                "$ref": "#/$defs/text"
+              }
+            }
+          }
+        }
+      }
+    },
+    "interfaces": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "requirement_ids",
+          "name",
+          "owner",
+          "producer",
+          "consumer",
+          "data",
+          "units",
+          "frame",
+          "freshness",
+          "failure_behavior"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "requirement_ids": {
+            "$ref": "#/$defs/ids"
+          },
+          "name": {
+            "$ref": "#/$defs/text"
+          },
+          "owner": {
+            "$ref": "#/$defs/text"
+          },
+          "producer": {
+            "$ref": "#/$defs/text"
+          },
+          "consumer": {
+            "$ref": "#/$defs/text"
+          },
+          "data": {
+            "$ref": "#/$defs/text"
+          },
+          "units": {
+            "$ref": "#/$defs/text"
+          },
+          "frame": {
+            "$ref": "#/$defs/text"
+          },
+          "freshness": {
+            "$ref": "#/$defs/text"
+          },
+          "failure_behavior": {
+            "$ref": "#/$defs/text"
+          },
+          "ros_name": {
+            "$ref": "#/$defs/text"
+          }
+        }
+      }
+    },
+    "algorithm_plan": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "requirement_ids",
+          "function",
+          "choice",
+          "rationale",
+          "prerequisites",
+          "failure_behavior"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "requirement_ids": {
+            "$ref": "#/$defs/ids"
+          },
+          "function": {
+            "$ref": "#/$defs/text"
+          },
+          "choice": {
+            "$ref": "#/$defs/text"
+          },
+          "rationale": {
+            "$ref": "#/$defs/text"
+          },
+          "failure_behavior": {
+            "$ref": "#/$defs/text"
+          },
+          "prerequisites": {
+            "$ref": "#/$defs/texts"
+          }
+        }
+      }
+    },
+    "hardware_functional_plan": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "requirement_ids",
+          "function",
+          "performance_requirements",
+          "interface",
+          "environmental_requirements",
+          "degradation"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "requirement_ids": {
+            "$ref": "#/$defs/ids"
+          },
+          "function": {
+            "$ref": "#/$defs/text"
+          },
+          "interface": {
+            "$ref": "#/$defs/text"
+          },
+          "degradation": {
+            "$ref": "#/$defs/text"
+          },
+          "performance_requirements": {
+            "$ref": "#/$defs/texts"
+          },
+          "environmental_requirements": {
+            "$ref": "#/$defs/texts"
+          }
+        }
+      }
+    },
+    "safety_plan": {
+      "type": "object",
+      "required": [
+        "id",
+        "requirement_ids",
+        "physical_output",
+        "control_authority",
+        "stop_behavior",
+        "watchdog",
+        "fault_recovery",
+        "max_linear_mps",
+        "max_angular_radps",
+        "command_timeout_s",
+        "status_timeout_s"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "requirement_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "physical_output": {
+          "const": "disabled_by_default"
+        },
+        "control_authority": {
+          "$ref": "#/$defs/text"
+        },
+        "stop_behavior": {
+          "$ref": "#/$defs/text"
+        },
+        "watchdog": {
+          "$ref": "#/$defs/text"
+        },
+        "fault_recovery": {
+          "$ref": "#/$defs/text"
+        },
+        "max_linear_mps": {
+          "$ref": "#/$defs/positive"
+        },
+        "max_angular_radps": {
+          "$ref": "#/$defs/positive"
+        },
+        "command_timeout_s": {
+          "$ref": "#/$defs/positive"
+        },
+        "status_timeout_s": {
+          "$ref": "#/$defs/positive"
+        }
+      }
+    },
+    "verification_plan": {
+      "type": "object",
+      "required": [
+        "unit",
+        "integration",
+        "simulation",
+        "replay",
+        "manual_safety_review",
+        "checks"
+      ],
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/text"
+        },
+        "integration": {
+          "$ref": "#/$defs/text"
+        },
+        "simulation": {
+          "$ref": "#/$defs/text"
+        },
+        "replay": {
+          "$ref": "#/$defs/text"
+        },
+        "manual_safety_review": {
+          "$ref": "#/$defs/text"
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "requirement_ids",
+              "level",
+              "scenario",
+              "acceptance",
+              "evidence",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "requirement_ids": {
+                "$ref": "#/$defs/ids"
+              },
+              "level": {
+                "enum": [
+                  "unit",
+                  "integration",
+                  "simulation",
+                  "replay",
+                  "manual"
+                ]
+              },
+              "scenario": {
+                "$ref": "#/$defs/text"
+              },
+              "acceptance": {
+                "$ref": "#/$defs/text"
+              },
+              "evidence": {
+                "$ref": "#/$defs/text"
+              },
+              "status": {
+                "enum": [
+                  "planned",
+                  "implemented"
+                ]
+              },
+              "test_node": {
+                "$ref": "#/$defs/text"
+              }
+            },
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "implemented"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "test_node"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "traceability": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "requirement_id",
+          "design_ids",
+          "ros_interfaces",
+          "implementation",
+          "test_ids",
+          "evidence_artifact"
+        ],
+        "properties": {
+          "requirement_id": {
+            "$ref": "#/$defs/id"
+          },
+          "design_ids": {
+            "$ref": "#/$defs/ids"
+          },
+          "ros_interfaces": {
+            "$ref": "#/$defs/texts"
+          },
+          "implementation": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "file",
+                "symbol"
+              ],
+              "properties": {
+                "file": {
+                  "$ref": "#/$defs/text"
+                },
+                "symbol": {
+                  "$ref": "#/$defs/text"
+                }
+              }
+            }
+          },
+          "test_ids": {
+            "$ref": "#/$defs/ids"
+          },
+          "evidence_artifact": {
+            "$ref": "#/$defs/text"
+          }
+        }
+      }
+    },
+    "open_decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/text"
+      }
+    }
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$"
+    },
+    "texts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/text"
+      }
+    },
+    "ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "positive": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    }
   }
 }

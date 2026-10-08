@@ -36,14 +36,21 @@ def run_graph_scenario() -> None:
         while time.monotonic() < end:
             executor.spin_once(timeout_sec=0.02)
 
-    def send_motion() -> None:
+    def send_motion(linear: float = 0.2) -> None:
         message = Twist()
-        message.linear.x = 0.2
+        message.linear.x = linear
         requests.publish(message)
 
     try:
         pump(0.35)
         assert safe and safe[-1].linear.x == 0.0
+        assert reset.wait_for_service(timeout_sec=1.0)
+        future = reset.call_async(Trigger.Request())
+        pump(0.1)
+        assert future.done() and future.result().success
+        send_motion(0.7)
+        pump(0.1)
+        assert safe[-1].linear.x == 0.0
         send_motion()
         pump(0.15)
         assert safe[-1].linear.x == 0.2
@@ -53,6 +60,16 @@ def run_graph_scenario() -> None:
         pump(0.2)
         assert safe[-1].linear.x == 0.0
         environment.set_parameters([Parameter("health_ok", value=True)])
+        pump(0.15)
+        assert safe[-1].linear.x == 0.0
+
+        send_motion()
+        pump(0.1)
+        assert safe[-1].linear.x == 0.2
+        environment.set_parameters([Parameter("obstacle_clear", value=False)])
+        pump(0.15)
+        assert safe[-1].linear.x == 0.0
+        environment.set_parameters([Parameter("obstacle_clear", value=True)])
         pump(0.15)
         assert safe[-1].linear.x == 0.0
 
@@ -88,3 +105,60 @@ def run_graph_scenario() -> None:
 class SimGraphTest(unittest.TestCase):
     def test_faults_stop_and_require_fresh_motion(self) -> None:
         run_graph_scenario()
+
+    def test_restart_requires_reset(self) -> None:
+        rclpy.init()
+        gate = SafetyGateNode()
+        environment = SimEnvironmentNode()
+        probe = Node("restart_probe")
+        executor = SingleThreadedExecutor()
+        for node in (gate, environment, probe):
+            executor.add_node(node)
+        safe: list[Twist] = []
+        probe.create_subscription(Twist, "cmd_safe", safe.append, 10)
+        requests = probe.create_publisher(Twist, "cmd_request", 10)
+        reset = probe.create_client(Trigger, "reset_estop")
+
+        def pump(seconds: float) -> None:
+            end = time.monotonic() + seconds
+            while time.monotonic() < end:
+                executor.spin_once(timeout_sec=0.02)
+
+        def send_motion() -> None:
+            request = Twist()
+            request.linear.x = 0.2
+            requests.publish(request)
+
+        def safe_reset() -> None:
+            self.assertTrue(reset.wait_for_service(timeout_sec=1.0))
+            future = reset.call_async(Trigger.Request())
+            pump(0.15)
+            self.assertTrue(future.done() and future.result().success)
+
+        try:
+            pump(0.35)
+            send_motion()
+            pump(0.1)
+            self.assertEqual(safe[-1].linear.x, 0.0)
+            safe_reset()
+            send_motion()
+            pump(0.1)
+            self.assertEqual(safe[-1].linear.x, 0.2)
+            executor.remove_node(gate)
+            gate.destroy_node()
+            gate = SafetyGateNode()
+            executor.add_node(gate)
+            pump(0.35)
+            send_motion()
+            pump(0.1)
+            self.assertEqual(safe[-1].linear.x, 0.0)
+            safe_reset()
+            send_motion()
+            pump(0.1)
+            self.assertEqual(safe[-1].linear.x, 0.2)
+        finally:
+            for node in (probe, environment, gate):
+                executor.remove_node(node)
+                node.destroy_node()
+            executor.shutdown()
+            rclpy.shutdown()

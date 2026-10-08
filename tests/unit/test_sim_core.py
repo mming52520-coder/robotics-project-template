@@ -18,6 +18,18 @@ class SafetyGateTests(unittest.TestCase):
         self.gate.receive_estop(False, 1.0)
         self.gate.receive_health(True, 1.0)
         self.gate.receive_obstacle(True, 1.0)
+        self.assertTrue(self.gate.reset_estop(1.0))
+
+    def test_startup_and_restart_require_safe_reset(self) -> None:
+        restarted = SafetyGate()
+        restarted.receive_estop(False, 1.0)
+        restarted.receive_health(True, 1.0)
+        restarted.receive_obstacle(True, 1.0)
+        self.assertFalse(restarted.receive_command(0.2, 0.0, 1.0))
+        self.assertEqual(restarted.output(1.0), (0.0, 0.0))
+        self.assertTrue(restarted.reset_estop(1.01))
+        self.assertEqual(restarted.output(1.01), (0.0, 0.0))
+        self.assertTrue(restarted.receive_command(0.2, 0.0, 1.02))
 
     def test_requires_fresh_status_and_command(self) -> None:
         self.assertEqual(self.gate.output(1.0), (0.0, 0.0))

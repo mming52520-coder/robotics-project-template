@@ -29,7 +29,8 @@ class SafetyGate:
         self.command_at: float | None = None
         self.estop: bool | None = None
         self.estop_at: float | None = None
-        self.estop_latched = False
+        # A new process has no evidence that a previous emergency stop was cleared.
+        self.estop_latched = True
         self.health: bool | None = None
         self.health_at: float | None = None
         self.obstacle_clear: bool | None = None

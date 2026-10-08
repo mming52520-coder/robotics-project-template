@@ -1,12 +1,135 @@
 {
-  "schema_version": "v1",
+  "schema_version": "v2",
   "brief_id": "narrow-delivery-v1",
-  "assumptions": [{"statement": "The corridor remains controlled during evaluation.", "status": "confirmed", "evidence": "DesignBrief operating_environment.people_access"}],
-  "system_architecture": {"reference": "ros2", "components": [{"name": "mission manager", "responsibility": "manage station deliveries"}, {"name": "navigation", "responsibility": "track a bounded route"}, {"name": "safety gate", "responsibility": "gate motion requests"}]},
-  "interfaces": [{"name": "bounded velocity request", "producer": "navigation", "consumer": "safety gate", "data": "linear and angular velocity", "units": "m/s and rad/s", "frame": "base frame", "failure_behavior": "expire to zero motion"}],
-  "algorithm_plan": [{"function": "route tracking", "choice": "global route planning with local clearance-aware tracking", "rationale": "Separates fixed route intent from short-horizon clearance response.", "prerequisites": ["measured footprint", "route clearance", "fresh observations"], "failure_behavior": "stop when route clearance cannot be established"}],
-  "hardware_functional_plan": [{"function": "clearance observation", "performance_requirements": ["cover the intended stopping envelope", "report freshness"], "interface": "timestamped observation stream", "environmental_requirements": ["indoor reflective surfaces"], "degradation": "reduce speed or stop on insufficient freshness"}],
-  "safety_plan": {"physical_output": "disabled_by_default", "control_authority": "all motion flows through one safety gate", "stop_behavior": "stale or unsafe requests resolve to zero motion", "watchdog": "motion expires without a fresh bounded request", "fault_recovery": "require reset and safe-state confirmation"},
-  "verification_plan": {"unit": "check clearance limits and request expiry", "integration": "use fake motion and observation transports", "simulation": "exercise narrow-route clearance faults", "replay": "compare synthetic blocked-corridor scenarios", "manual_safety_review": "approve trial procedure before hardware output"},
-  "open_decisions": ["Measure route clearance before physical trials."]
+  "assumptions": [
+    {
+      "statement": "The corridor remains controlled during evaluation.",
+      "status": "confirmed",
+      "evidence": "DesignBrief operating_environment.people_access"
+    }
+  ],
+  "system_architecture": {
+    "reference": "ros2",
+    "components": [
+      {
+        "name": "mission manager",
+        "responsibility": "manage station deliveries"
+      },
+      {
+        "name": "navigation",
+        "responsibility": "track a bounded route"
+      },
+      {
+        "name": "safety gate",
+        "responsibility": "gate motion requests"
+      }
+    ]
+  },
+  "interfaces": [
+    {
+      "name": "bounded velocity request",
+      "producer": "navigation",
+      "consumer": "safety gate",
+      "data": "linear and angular velocity",
+      "units": "m/s and rad/s",
+      "frame": "base frame",
+      "failure_behavior": "expire to zero motion",
+      "id": "IF-PLAN-REQUEST",
+      "requirement_ids": [
+        "REQ-PLAN-NAV"
+      ],
+      "owner": "navigation",
+      "freshness": "Timestamp and expiry must be defined before integration"
+    }
+  ],
+  "algorithm_plan": [
+    {
+      "function": "route tracking",
+      "choice": "global route planning with local clearance-aware tracking",
+      "rationale": "Separates fixed route intent from short-horizon clearance response.",
+      "prerequisites": [
+        "measured footprint",
+        "route clearance",
+        "fresh observations"
+      ],
+      "failure_behavior": "stop when route clearance cannot be established",
+      "id": "ALG-PLAN-PRIMARY",
+      "requirement_ids": [
+        "REQ-PLAN-NAV"
+      ]
+    }
+  ],
+  "hardware_functional_plan": [
+    {
+      "function": "clearance observation",
+      "performance_requirements": [
+        "cover the intended stopping envelope",
+        "report freshness"
+      ],
+      "interface": "timestamped observation stream",
+      "environmental_requirements": [
+        "indoor reflective surfaces"
+      ],
+      "degradation": "reduce speed or stop on insufficient freshness",
+      "id": "HW-PLAN-PRIMARY",
+      "requirement_ids": [
+        "REQ-PLAN-OBS"
+      ]
+    }
+  ],
+  "safety_plan": {
+    "physical_output": "disabled_by_default",
+    "control_authority": "all motion flows through one safety gate",
+    "stop_behavior": "stale or unsafe requests resolve to zero motion",
+    "watchdog": "motion expires without a fresh bounded request",
+    "fault_recovery": "require reset and safe-state confirmation",
+    "id": "SAFE-PLAN",
+    "requirement_ids": [
+      "REQ-PLAN-NAV",
+      "REQ-PLAN-OBS"
+    ],
+    "max_linear_mps": 0.3,
+    "max_angular_radps": 1.0,
+    "command_timeout_s": 0.25,
+    "status_timeout_s": 0.3
+  },
+  "verification_plan": {
+    "unit": "check clearance limits and request expiry",
+    "integration": "use fake motion and observation transports",
+    "simulation": "exercise narrow-route clearance faults",
+    "replay": "compare synthetic blocked-corridor scenarios",
+    "manual_safety_review": "approve trial procedure before hardware output",
+    "checks": [
+      {
+        "id": "T-PLAN-DESIGN",
+        "requirement_ids": [
+          "REQ-PLAN-NAV",
+          "REQ-PLAN-OBS"
+        ],
+        "level": "simulation",
+        "scenario": "Inject stale or failed inputs with fake transports",
+        "acceptance": "Motion is inhibited and evidence identifies the fault",
+        "evidence": "Future simulation JUnit",
+        "status": "planned"
+      }
+    ]
+  },
+  "open_decisions": [
+    "Measure route clearance before physical trials."
+  ],
+  "traceability": [],
+  "requirements": [
+    {
+      "id": "REQ-PLAN-NAV",
+      "source": "/required_capabilities/2",
+      "statement": "Plan navigation for narrow routes.",
+      "status": "planned"
+    },
+    {
+      "id": "REQ-PLAN-OBS",
+      "source": "/required_capabilities/3",
+      "statement": "Specify obstacle-stop observation.",
+      "status": "planned"
+    }
+  ]
 }

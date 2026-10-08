@@ -36,14 +36,15 @@ In another sourced terminal, inspect the zero-motion default, then publish a bou
 
 ```bash
 ros2 topic echo /sim/cmd_safe
+ros2 service call /sim/reset_estop std_srvs/srv/Trigger '{}'
 ros2 topic pub -r 10 /sim/cmd_request geometry_msgs/msg/Twist \
   '{linear: {x: 0.2}, angular: {z: 0.0}}'
 ros2 topic echo /sim/odom
 ```
 
-Stop the request publisher; its 0.25-second timeout makes the next gate publication zero. To inject a fault, run `ros2 param set /sim/sim_environment emergency_stop true`. Clear it with `ros2 param set /sim/sim_environment emergency_stop false`, then call `ros2 service call /sim/reset_estop std_srvs/srv/Trigger '{}'` and publish a fresh request. The same parameter interface exposes `health_ok` and `obstacle_clear`. See [simulation contract](docs/reference/ros2-simulation.md) for exact topic, timeout, fault, and evidence boundaries.
+The gate starts latched, so the reset succeeds only after the synthetic status inputs are fresh and clear. Stop the request publisher; its 0.25-second timeout makes the next gate publication zero. To inject a fault, run `ros2 param set /sim/sim_environment emergency_stop true`. Clear it with `ros2 param set /sim/sim_environment emergency_stop false`, then call `ros2 service call /sim/reset_estop std_srvs/srv/Trigger '{}'` and publish a fresh request. A restarted gate also requires reset. The same parameter interface exposes `health_ok` and `obstacle_clear`. See [simulation contract](docs/reference/ros2-simulation.md) for exact topic, timeout, fault, and evidence boundaries.
 
-Run the offline suite with `bash scripts/run-checks.sh`. In a Jazzy environment, run `python3 -m pytest -q src/robotics_sim/test/test_*.py` after sourcing `install/setup.bash`. CI builds the package, tests the ROS graph and installed launch, and stores JUnit results.
+Run the offline suite with `bash scripts/run-checks.sh`. In a Jazzy environment, run `python3 -m pytest -q src/robotics_sim/test/test_*.py --junitxml=build/robotics_sim/test_results/robotics_sim/pytest.xml` after sourcing `install/setup.bash`, then validate the JUnit evidence as described in `contracts/README.md`. CI builds the package, tests the ROS graph and installed launch, and stores JUnit results.
 
 ## Structure
 
@@ -100,7 +101,7 @@ python tools/validate_skills.py
 python tools/validate_evals.py
 python tools/validate_public_content.py
 python -m unittest discover -s tests/unit -p "test_*.py"
-python -m ruff check tools src/robotics_sim tests/unit/test_sim_core.py
+python -m ruff check tools src/robotics_sim tests/unit/test_design_contracts.py tests/unit/test_sim_core.py
 yamllint --config-file .yamllint.yaml .
 pymarkdown --config .pymarkdown.json scan .
 shellcheck scripts/*.sh

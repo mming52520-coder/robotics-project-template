@@ -22,4 +22,4 @@ Keep the existing model-free DesignBrief and DesignPackage workflow. Add one ROS
 
 ## Verification and limits
 
-Validate the synthetic design pair, run offline unit tests, build with Jazzy, run `colcon test`, and smoke-test the installed launch. These prove only the specified simulation behavior. Before physical work, a project-specific design and human-reviewed safe test procedure remain required.
+Validate the synthetic design pair, run offline unit tests, build with Jazzy, run the ROS pytest suite and inspect `colcon test-result`, then smoke-test the installed launch. These prove only the specified simulation behavior. Before physical work, a project-specific design and human-reviewed safe test procedure remain required.
