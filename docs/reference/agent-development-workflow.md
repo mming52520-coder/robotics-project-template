@@ -11,6 +11,9 @@ Repository files constrain that Agent; they do not run a model on their own.
 1. **Understand:** Read the request, `AGENTS.md`, work memory, relevant DesignPackage,
    existing ROS code and tests, and the safety boundary. Ask only for a decision that
    changes safety authority, unknown physical limits, real hardware access, or scope.
+   If the request starts a new robot capability, use the
+   [hardware and protocol handoff](hardware-protocol-handoff.md) stages: a private
+   selection list and protocol-pending algorithm work can proceed in parallel.
 2. **Bound:** Reuse existing design for a local fix. For a new behavior, add planned
    requirement and test IDs through the relevant design Skills. Write one ChangeContract
    and run `python3 tools/validate_change_contract.py --phase plan`.
@@ -26,6 +29,11 @@ Repository files constrain that Agent; they do not run a model on their own.
 6. **Deliver:** Give the user the actual code location, branch/revision, checks and
    raw evidence, review findings and dispositions, and unverified risks. Remote push,
    merge, production settings, and physical trials remain separate decisions.
+
+When purchased-device protocols arrive, open a new bounded change for the adapter and
+its tests. Reconcile the protocol with the stable ROS contract before coding and keep
+the safety gate closed. Passing tests can make the adapter reviewable; physical trial
+readiness requires a separate human-reviewed procedure and site preflight.
 
 The plan gate is intentionally usable before a new test has code. The final gate rejects
 a planned-only requirement or test. A self-review provides useful defect finding but

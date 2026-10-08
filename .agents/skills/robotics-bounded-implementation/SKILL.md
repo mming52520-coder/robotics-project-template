@@ -13,6 +13,10 @@ requested change explicitly revises it and its safety basis is resolved.
 1. Trace affected implementation paths and reuse existing helpers before editing.
 2. Make the smallest correct change inside the declared paths. Stop if a new requirement,
    interface meaning, safety threshold, or file outside scope becomes necessary.
+   Protocol-pending work uses fake or replay transports and stable ROS contracts.
+   After the engineer supplies protocol evidence, implement the device adapter only
+   after checking version, framing, units, timing, errors, and stop semantics against
+   those contracts. Do not infer missing wire behavior.
 3. Update planned design links to the actual implementation and test nodes. Run
    `python3 tools/validate_change_contract.py --phase final`, then
    `scripts/run-checks.sh` and, for ROS behavior or evidence links,

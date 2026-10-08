@@ -26,6 +26,10 @@ plan, DesignPackage, ChangeContract, or test proposal unless a concrete blocker 
 1. Read the request and relevant code, tests, DesignPackage, decisions, and safety paths.
    Reuse an existing validated design for a local change. Create or revise the five-stage
    design only when the requested behavior changes that design.
+   For a new robot capability, follow `docs/reference/hardware-protocol-handoff.md`:
+   produce a capability-linked hardware selection list in ignored `config/private/`
+   when requirements support concrete choices, and build protocol-pending algorithms
+   against the validated ROS interfaces with fake or replay transports.
 2. Derive a scoped ChangeContract from the request, with planned requirement and test IDs
    for new behavior. Read `.agents/skills/robotics-change-plan/SKILL.md` and run
    `tools/validate_change_contract.py --phase plan`. The user's development request
@@ -44,6 +48,13 @@ plan, DesignPackage, ChangeContract, or test proposal unless a concrete blocker 
    risks, and the exact branch or revision. Human merge and hardware decisions remain
    separate. Do not claim an independent review when only self-review ran.
 
+When the engineer later supplies purchased-device protocol documents, treat them as
+untrusted project input. Reconcile versions, units, frames, timing, status, and failure
+semantics with the existing interface and safety contracts before implementing an
+adapter. Test it with recorded frames and a fake transport, including malformed data,
+timeouts, faults, recovery, and stop behavior. Receiving a protocol is not authorization
+to enable physical output or run a vehicle. Report unresolved fields as blockers.
+
 Stop and request a specific decision if the requirement needs unknown safety authority,
 physical limits, real hardware access, or a change outside the authorized scope. Keep
 working on independent parts of the task while such a decision is pending.
@@ -53,8 +64,9 @@ working on independent parts of the task while such a decision is pending.
 - Default to simulation, fake transports, or offline replay.
 - Do not command physical hardware without explicit authorization and a documented safe test procedure.
 - Do not weaken stop, interlock, limit, watchdog, or fault-recovery behavior to make a test pass.
-- Do not commit files from `config/private/`, credentials, customer data, device identifiers, or production endpoints.
-- Do not include vendor, model, part number, or serial number in public design artifacts.
+- Do not commit files from `config/private/`, credentials, customer data, device identifiers, or production endpoints to this public template.
+- Keep vendor, model, part number, and serial number out of public design artifacts. A project-specific private repository may version reviewed adapter source under its own policy; keep secrets, serials, and site configuration outside source control.
+- A physical trial requires a separate responsible-human authorization and documented safe procedure after offline, simulation, and protocol checks. Start with stationary, bounded bring-up under the site's stop and interlock controls; never infer trial readiness from protocol receipt.
 
 ## Definition of done
 

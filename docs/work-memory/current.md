@@ -21,6 +21,10 @@ development request through code generation, checks, a read-only review pass, bo
 fixes, and final evidence. A plan-phase contract can now reference planned test IDs;
 the final gate still requires implemented tests. This is repository guidance for an
 AGENTS.md-aware Agent, not an unattended model service.
+The follow-on `codex/hardware-protocol-handoff` candidate defines a private,
+source-backed hardware selection handoff, protocol-pending algorithm work over fake
+interfaces, later received-protocol adapter checks, and a separate supervised physical
+trial gate. It does not select a product, implement a driver, or authorize a trial.
 
 ## Evidence
 
@@ -43,6 +47,10 @@ AGENTS.md-aware Agent, not an unattended model service.
   lint, and four Jazzy simulation tests passed locally. The plan/final regression uses
   a real planned warehouse-tote requirement and test. A positive Agent workflow case
   is defined but has not been run with a separate Agent; self-review is not independent.
+- Hardware/protocol handoff candidate: 54 offline unit tests and four Jazzy simulation
+  tests passed locally. Git-ignore regression confirms a local private selection file
+  is permitted while a force-tracked private file is rejected. The staged workflow
+  acceptance record is `docs/acceptance/hardware-protocol-handoff.md`.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
 - GitHub Actions for PR #18 at `1b23621`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
 
@@ -53,6 +61,8 @@ ADR-0003 records the simulation runtime scope and reference-project evidence bou
 ADR-0004 proposes the versioned DesignPackage v2 upgrade and bidirectional trace requirement.
 ADR-0005 proposes bounded changes and execution evidence, with `jsonschema` as a
 development validator dependency and optional read-only OCR review.
+ADR-0006 proposes a private hardware selection and protocol intake boundary while
+preserving the model-free public DesignPackage and physical-output gate.
 
 ## Blockers
 
@@ -63,6 +73,9 @@ CI, review rule, and tests. OCR CLI and Agent behavior evaluation were not run l
 GitHub ruleset and repository-template settings were not changed.
 The requirement-to-code branch is still local; other users cloning remote `main` will
 not receive this workflow until it is reviewed and merged.
+No project-specific hardware requirements, selected device, received protocol,
+calibration, electrical approval, or physical-trial authorization exists in this
+template. A separate reviewer and fresh remote CI remain pending for this candidate.
 
 ## Next Actions
 
@@ -75,6 +88,11 @@ not receive this workflow until it is reviewed and merged.
 6. Give an AGENTS.md-aware coding Agent a bounded simulation requirement in this checkout.
    Verify: it changes source and regression tests, produces a review record, and reports
    final snapshot evidence rather than stopping at a plan.
+7. For a new hardware-dependent project requirement, build a private selection list
+   linked to public requirement and interface IDs, and implement independent algorithm
+   behavior with fake or replay transport. Verify source dates and unresolved gaps.
+8. After protocol receipt, reconcile the exact revision and produce reviewed adapter
+   tests before requesting a separately authorized stationary physical procedure.
 
 ## Verification
 

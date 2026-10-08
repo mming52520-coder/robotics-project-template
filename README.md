@@ -2,7 +2,7 @@
 
 本项目用于 AI 辅助设计轮式机器人。它将结构化需求转为可审查的 ROS 2 架构、算法方案、硬件功能方案、安全方案和测试计划。
 实现工作以经过校验的设计包和受限变更合同为依据；测试执行结果须有原始证据。
-The repository includes a simulation-only ROS 2 package. It has no hardware drivers, product recommendations, real configuration, or permission to actuate physical hardware. Examples are synthetic and physical output is disabled by default.
+The repository includes a simulation-only ROS 2 package. It has no hardware drivers, published product recommendations, real configuration, or permission to actuate physical hardware. Examples are synthetic and physical output is disabled by default.
 
 Before starting a new architecture, use `open-source-architecture-research` to inspect the current
 project and compare high-signal public references. The Skill records reproducible evidence; the AI
@@ -20,6 +20,12 @@ clone code or choose products.
 3. For a new robot design, copy a synthetic DesignBrief and replace it with verified
    project facts. The Agent then runs the relevant design Skills before implementation.
 4. Review `contracts/README.md`, `docs/reference/`, and the safety gate before physical work.
+
+For a new robot capability, the Agent can make a private, source-backed hardware
+selection list and implement protocol-pending algorithms against fake/replay interfaces.
+When an engineer later supplies the purchased device's protocol, the Agent can build
+and review an adapter with offline evidence. A supervised vehicle trial remains a
+separate authorized stage. See [hardware and protocol handoff](docs/reference/hardware-protocol-handoff.md).
 
 For example, a user can say: “Add a read-only timeout diagnostic to the simulated base.
 Keep motion gating unchanged. Implement it, test it, review the code, and report the
@@ -97,12 +103,18 @@ available results, including JUnit. See [contracts](contracts/README.md) for evi
 6. Write a ChangeContract, generate code and tests, run shared checks, review the exact diff,
    fix confirmed findings, and recheck the final snapshot / 为单次变更完成代码、测试和复核。
 7. Update architecture decisions and working memory / 更新架构决策与工作记忆。
+8. For a project requiring hardware, prepare a private selection list, then integrate
+   received protocols with fake/replay evidence before a separately approved physical
+   trial / 项目需要硬件时，先形成私有选型清单，收到协议后完成离线适配验证，再单独审批实车试验。
 
 ## Model-free policy
 
 - Describe hardware functions, interfaces, performance, health signals, environment, and degradation behavior.
-- Never commit or generate vendor, model, part number, serial number, customer data, site data, endpoint, account, or credential.
-- Treat a user-provided product identity as a capability constraint; do not copy it into a public artifact.
+- Never put vendor, model, part number, serial number, customer data, site data,
+  endpoint, account, or credential in a public artifact. Concrete candidate identities
+  may be kept in ignored local `config/private/` for engineer review.
+- Treat a user-provided product identity as a capability constraint in the public
+  DesignPackage; keep its identity and protocol document private.
 
 ## Safety boundary
 

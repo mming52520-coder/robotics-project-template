@@ -13,6 +13,9 @@ Read `references/control-safety-invariants.md` and `assets/safety-plan-template.
 2. Define one control-authority path from mission or operator requests through a safety gate to the base interface.
 3. Define bounds, freshness expiry, stop behavior, watchdog behavior, diagnostics, and fault recovery. A stale or invalid command resolves to zero motion.
 4. Define the simulation, fake-transport, and documented physical-trial gates. Keep hardware output disabled unless a responsible human authorizes a safe procedure.
+   Protocol receipt and passing adapter tests do not open that gate. Require a separate
+   human-reviewed stationary bring-up and bounded trial procedure with verified stop,
+   interlock, limits, watchdog, fault handling, and a named abort owner.
 5. Write the `safety_plan` section of the DesignPackage.
 
 ## Safety and public boundary / 安全与公开边界

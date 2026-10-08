@@ -3,22 +3,25 @@
   "design_package_ref": "examples/warehouse-tote/design-package.json",
   "design_package_sha256": "ec1cc69ace899fa7a1f9f478ce58b3fe3ad146d3cc6bd0efbb3404feb2d8c5a0",
   "base_revision": "c41341f8d586fe03ab5b355a921ec84aafbca79f",
-  "objective": "Let a local coding Agent turn a user's bounded robotics requirement into code, tests, reviewed fixes, and snapshot-bound evidence.",
+  "objective": "Let a local coding Agent turn a robotics requirement into reviewed code and evidence, with a private hardware selection and protocol handoff before any separately authorized physical trial.",
   "in_scope": [
     "Versioned design-only compatibility and v2 implementation readiness checks",
     "A scoped ChangeContract and deterministic local/CI evidence manifests",
     "Repository Skills and optional read-only review handoff",
     "Direct local requirement-to-code and review routing with plan and final contract gates",
-    "Repository-side PR and governance documentation"
+    "Repository-side PR and governance documentation",
+    "Private hardware selection and received-protocol workflow rules, with safe public validation"
   ],
   "out_of_scope": [
     "ROS control behavior, physical devices, production parameters, and hardware output",
     "Unbounded source repair, automatic push, merge, or release",
-    "Live GitHub ruleset changes before candidate CI is verified"
+    "Live GitHub ruleset changes before candidate CI is verified",
+    "Concrete procurement, unverified device drivers, and physical trials"
   ],
   "allowed_paths": [
     ".gitignore",
     "AGENTS.md",
+    "config/private/README.md",
     "requirements-dev.txt",
     ".github/workflows/ci.yml",
     ".github/pull_request_template.md",
