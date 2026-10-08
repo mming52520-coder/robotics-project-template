@@ -110,12 +110,28 @@ def validate_eval_suite(evals_root: Path, repo_root: Path) -> list[str]:
         if not isinstance(identifier, str) or not identifier.strip() or identifier in identifiers:
             errors.append(f"{path.name}: workflow id must be non-empty and unique")
         identifiers.add(str(identifier))
-        if document.get("kind") != "workflow-negative":
-            errors.append(f"{path.name}: kind must be workflow-negative")
+        kind = document.get("kind")
+        if kind not in {"workflow-negative", "workflow-positive"}:
+            errors.append(f"{path.name}: kind must be workflow-negative or workflow-positive")
         if not isinstance(document.get("scenario"), str) or not document["scenario"].strip():
             errors.append(f"{path.name}: scenario must be non-empty")
-        if document.get("expected_decision") != "block":
+        if kind == "workflow-negative" and document.get("expected_decision") != "block":
             errors.append(f"{path.name}: expected decision must be block")
+        if kind == "workflow-positive":
+            if document.get("expected_decision") != "implement_and_review":
+                errors.append(f"{path.name}: expected decision must be implement_and_review")
+            required_artifacts = {
+                "changed_source", "regression_test", "execution_evidence", "review_record",
+            }
+            artifacts = document.get("expected_artifacts")
+            if (
+                not isinstance(artifacts, list)
+                or any(not isinstance(item, str) for item in artifacts)
+                or set(artifacts) != required_artifacts
+            ):
+                errors.append(
+                    f"{path.name}: positive workflow needs code, tests, evidence, and review"
+                )
         if document.get("agent_run_status") != "not_run":
             errors.append(f"{path.name}: fixture cannot claim an Agent run result")
     return errors

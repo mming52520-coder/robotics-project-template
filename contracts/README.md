@@ -40,7 +40,8 @@ a blocker. Validation establishes contract completeness; it does not certify rob
 python tools/validate_design_package.py BRIEF.json
 python tools/validate_design_package.py BRIEF.json PACKAGE.json
 python tools/validate_design_package.py BRIEF.json OLD-V1-PACKAGE.json --legacy-design-only
-python tools/validate_change_contract.py changes/<change-id>/change.json
+python tools/validate_change_contract.py changes/<change-id>/change.json --phase plan
+python tools/validate_change_contract.py changes/<change-id>/change.json --phase final
 ```
 
 After running the Jazzy ROS tests, check the generated JUnit evidence with:
@@ -52,7 +53,9 @@ python3 tools/validate_design_package.py BRIEF.json PACKAGE.json --evidence buil
 Use JSON as the canonical machine-readable form. Use companion Markdown only to explain context for people. Do not place product identities, credentials, customer data, endpoints, or real site information in either artifact.
 
 The ChangeContract binds a specific diff to a DesignPackage digest, requirement IDs, paths,
-invariants, and required executable test IDs. Its validation does not prove human approval.
+invariants, and required test IDs. The `plan` phase accepts planned tests linked to planned
+requirements so an Agent can begin writing code. The `final` phase requires affected
+requirements and their tests to be implemented. Neither phase proves human approval.
 Generated evidence under `artifacts/` records the actual checked-out SHA, candidate PR head,
 raw logs, JUnit results, and per-test trace results. A complete link is an audit trail, not
 proof that the assertion has the intended meaning; reviewers must inspect that meaning.

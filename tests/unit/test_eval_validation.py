@@ -41,6 +41,22 @@ class EvalValidationTests(unittest.TestCase):
             errors = validate_eval_suite(root, ROOT)
             self.assertTrue(any("cannot claim an Agent run result" in error for error in errors))
 
+    def test_positive_workflow_requires_code_and_review_artifacts(self) -> None:
+        import json
+        from shutil import copytree
+        from tempfile import TemporaryDirectory
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory) / "evals"
+            copytree(ROOT / "evals", root)
+            case = root / "workflow-cases" / "04-implement-and-review.json"
+            document = json.loads(case.read_text())
+            document["expected_artifacts"].remove("changed_source")
+            case.write_text(json.dumps(document))
+            errors = validate_eval_suite(root, ROOT)
+            self.assertTrue(any("needs code, tests, evidence, and review" in error
+                                for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

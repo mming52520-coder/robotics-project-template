@@ -40,3 +40,10 @@ or test assertion still requires trusted-base inspection and human review becaus
 candidate can otherwise weaken its own checks. Server-side required PR/check rules
 are a separate repository-setting change after the candidate CI has passed. No
 hardware or physical-output claim follows from this decision.
+
+For newly requested behavior, the ChangeContract has a `plan` phase that accepts planned
+requirement and test IDs with valid links. The Agent can then implement code and tests
+without claiming they already exist. The `final` phase requires affected requirements
+and required tests to be implemented; only this phase is used by the shared check runner.
+The Agent's ordinary local implementation and review follow from the user's development
+request, while unresolved safety decisions and external delivery remain separate.

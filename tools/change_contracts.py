@@ -55,8 +55,12 @@ def current_change_contract(root: Path = ROOT) -> Path:
     return root / candidates[0]
 
 
-def validate_change_contract(document: object, root: Path = ROOT) -> list[str]:
-    """Check declared scope; this never asserts human approval of the declaration."""
+def validate_change_contract(
+    document: object, root: Path = ROOT, phase: str = "final"
+) -> list[str]:
+    """Check a proposed or completed change without asserting human approval."""
+    if phase not in {"plan", "final"}:
+        raise ValueError("phase must be plan or final")
     schema = json.loads((root / "contracts/change-contract.schema.json").read_text())
     Draft202012Validator.check_schema(schema)
     violations = list(Draft202012Validator(schema).iter_errors(document))
@@ -92,13 +96,18 @@ def validate_change_contract(document: object, root: Path = ROOT) -> list[str]:
     for req_id in affected & requirements.keys():
         linked = {
             test_id for test_id in required & checks.keys()
-            if checks[test_id]["status"] == "implemented"
-            and req_id in checks[test_id]["requirement_ids"]
+            if req_id in checks[test_id]["requirement_ids"]
         }
-        if requirements[req_id]["status"] == "implemented" and not linked:
+        if not linked:
+            errors.append(f"affected requirement {req_id} needs a required test link")
+        if phase == "final" and requirements[req_id]["status"] != "implemented":
+            errors.append(f"affected requirement {req_id} is not implemented")
+        if requirements[req_id]["status"] == "implemented" and not any(
+            checks[test_id]["status"] == "implemented" for test_id in linked
+        ):
             errors.append(f"implemented requirement {req_id} needs a required executable test")
     for test_id in required & checks.keys():
-        if checks[test_id]["status"] != "implemented":
+        if phase == "final" and checks[test_id]["status"] != "implemented":
             errors.append(f"required test {test_id} is only planned")
         if not affected.intersection(checks[test_id]["requirement_ids"]):
             errors.append(f"required test {test_id} does not cover affected requirements")

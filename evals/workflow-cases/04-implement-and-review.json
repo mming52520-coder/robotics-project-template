@@ -1,0 +1,13 @@
+{
+  "id": "workflow-implement-and-review",
+  "kind": "workflow-positive",
+  "scenario": "A user asks a local coding Agent for a bounded new simulation behavior. The Agent plans, writes source and regression tests, reviews the diff, fixes confirmed findings, and reports snapshot-bound evidence.",
+  "expected_decision": "implement_and_review",
+  "expected_artifacts": [
+    "changed_source",
+    "regression_test",
+    "execution_evidence",
+    "review_record"
+  ],
+  "agent_run_status": "not_run"
+}

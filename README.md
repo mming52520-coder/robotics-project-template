@@ -13,9 +13,19 @@ clone code or choose products.
 
 1. Clone this repository. The upstream repository's GitHub template setting was not enabled
    when last checked; use **Use this template** only after the owner enables it.
-2. Copy a synthetic DesignBrief from `examples/` and replace it with verified project facts only.
-3. Validate the brief, invoke the Skills in sequence, and validate the final package.
-4. Review `contracts/README.md`, `docs/reference/`, and the documented safety gate before any implementation work.
+2. Open the checkout with an AGENTS.md-aware coding Agent and describe the behavior you want.
+   The Agent should inspect the repository, then create or update the relevant design and
+   ChangeContract, write code and tests, review the diff, fix confirmed findings, and
+   return the final evidence in the same task.
+3. For a new robot design, copy a synthetic DesignBrief and replace it with verified
+   project facts. The Agent then runs the relevant design Skills before implementation.
+4. Review `contracts/README.md`, `docs/reference/`, and the safety gate before physical work.
+
+For example, a user can say: “Add a read-only timeout diagnostic to the simulated base.
+Keep motion gating unchanged. Implement it, test it, review the code, and report the
+evidence.” The Agent derives the detailed acceptance and code scope from the repository;
+the prompt is a request for implementation, not merely a test run. The exact workflow
+and stop conditions are in [Agent development workflow](docs/reference/agent-development-workflow.md).
 
 ```text
 python tools/validate_design_package.py examples/warehouse-tote/design-brief.json
@@ -84,7 +94,8 @@ available results, including JUnit. See [contracts](contracts/README.md) for evi
 3. Run system design, navigation, hardware, safety, and verification Skills / 按顺序运行五个 Skill。
 4. Validate the DesignPackage and keep uncertainties as blockers or open decisions / 校验设计包，保留不确定性。
 5. Implement only after simulation, fake transport, or replay evidence is planned / 先规划仿真、虚拟传输或回放证据。
-6. Write a ChangeContract, run the shared checks, and review the exact diff and evidence / 为单次变更声明范围、执行检查并复核证据。
+6. Write a ChangeContract, generate code and tests, run shared checks, review the exact diff,
+   fix confirmed findings, and recheck the final snapshot / 为单次变更完成代码、测试和复核。
 7. Update architecture decisions and working memory / 更新架构决策与工作记忆。
 
 ## Model-free policy

@@ -1,21 +1,25 @@
 ---
 name: robotics-bounded-implementation
-description: Implement one approved robotics ChangeContract in an isolated branch and produce deterministic test evidence. Use for source changes after the change scope is settled.
+description: Generate code and regression tests for a user-authorized robotics change in an isolated branch, then produce deterministic evidence and hand it to read-only review.
 ---
 
 # Robotics Bounded Implementation
 
-Read the current ChangeContract and `references/scope-and-evidence.md`. Start from its
-base revision in an isolated worktree. Keep the existing design and ROS safety behavior
-unless the authorized change explicitly revises them.
+Read the current ChangeContract, user request, and `references/scope-and-evidence.md`.
+Work in an isolated task branch or worktree. The validated plan bounds the edit but
+does not replace the user's authorization. Preserve ROS safety behavior unless the
+requested change explicitly revises it and its safety basis is resolved.
 
 1. Trace affected implementation paths and reuse existing helpers before editing.
 2. Make the smallest correct change inside the declared paths. Stop if a new requirement,
    interface meaning, safety threshold, or file outside scope becomes necessary.
-3. Run `scripts/run-checks.sh` and, for ROS behavior or evidence links,
+3. Update planned design links to the actual implementation and test nodes. Run
+   `python3 tools/validate_change_contract.py --phase final`, then
+   `scripts/run-checks.sh` and, for ROS behavior or evidence links,
    `scripts/run-ros-checks.sh`. Keep the generated manifest, raw logs, and JUnit results.
-4. Hand the diff and evidence to a separate read-only review. Record unmet gates as
-   blocked or failed; never self-report an unrun check as passed.
+4. Continue to `robotics-evidence-review` in the same user task. Return confirmed
+   findings to implementation, make bounded fixes, and regenerate evidence for the
+   final snapshot. Record unmet gates as blocked or failed; never call an unrun check pass.
 
 ## Safety and public boundary
 

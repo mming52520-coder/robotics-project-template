@@ -1,4 +1,4 @@
 interface:
   display_name: "Robotics Change Plan"
   short_description: "Bound one change to design, scope, and evidence."
-  default_prompt: "Use $robotics-change-plan to prepare a reviewable ChangeContract."
+  default_prompt: "Use $robotics-change-plan to bound this request, then continue to code if ready."

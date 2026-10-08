@@ -57,6 +57,20 @@ class ChangeContractTests(unittest.TestCase):
                 "scratch/extra.py",
             })
 
+    def test_planned_feature_can_start_but_cannot_pass_final_gate(self) -> None:
+        contract = copy.deepcopy(self.document)
+        contract["affected_requirement_ids"] = ["REQ-PLAN-LOCALIZE"]
+        contract["required_test_ids"] = ["T-PLAN-LOCALIZE"]
+        self.assertEqual(validate_change_contract(contract, ROOT, phase="plan"), [])
+        errors = validate_change_contract(contract, ROOT, phase="final")
+        self.assertIn("affected requirement REQ-PLAN-LOCALIZE is not implemented", errors)
+        self.assertIn("required test T-PLAN-LOCALIZE is only planned", errors)
+        contract["required_test_ids"] = ["T-PLAN-NAV"]
+        self.assertTrue(any(
+            "needs a required test link" in error
+            for error in validate_change_contract(contract, ROOT, phase="plan")
+        ))
+
 
 if __name__ == "__main__":
     unittest.main()

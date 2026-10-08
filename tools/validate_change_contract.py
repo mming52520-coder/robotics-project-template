@@ -16,6 +16,10 @@ except ImportError:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("contract", nargs="?", type=Path)
+    parser.add_argument(
+        "--phase", choices=("plan", "final"), default="final",
+        help="plan permits planned requirement tests; final requires executable tests",
+    )
     args = parser.parse_args()
     try:
         contract = args.contract or current_change_contract()
@@ -26,12 +30,12 @@ def main() -> int:
     if contract.parent.name != document.get("change_id"):
         print("change_id must match the contract directory")
         return 1
-    errors = validate_change_contract(document)
+    errors = validate_change_contract(document, phase=args.phase)
     for error in errors:
         print(error)
     if errors:
         return 1
-    print("change scope and design references validated; human approval not asserted")
+    print(f"{args.phase} change scope and design references validated; human approval not asserted")
     return 0
 
 

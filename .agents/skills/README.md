@@ -32,3 +32,10 @@ For a bounded code change based on an existing validated design, use
 only that scope and run checks, then `robotics-evidence-review` for a read-only
 review of the diff and evidence. These three Skills do not replace the five design
 Skills when the design itself changes. None of their files can record human approval.
+
+An AGENTS.md-aware coding Agent should run that sequence within one user request:
+the user describes a feature or bug, and the Agent writes the actual code and tests,
+reviews the result, fixes confirmed findings, and returns the final diff and evidence.
+The plan-stage ChangeContract may reference planned test IDs; the final gate requires
+implemented tests. Separate human approval is only needed for unresolved safety,
+hardware, or scope decisions, and before any unrequested remote action.

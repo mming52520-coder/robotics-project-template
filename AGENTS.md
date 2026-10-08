@@ -17,6 +17,37 @@
 - Treat changes to schemas, validators, CI, test assertions, and review policy as core-chain
   changes needing full checks and an independent human review of the candidate diff.
 
+## From a user requirement to reviewed code
+
+When a user asks an Agent working in this checkout to add a feature or fix a defect,
+carry the authorized local task through code, tests, and review. Do not stop after a
+plan, DesignPackage, ChangeContract, or test proposal unless a concrete blocker remains.
+
+1. Read the request and relevant code, tests, DesignPackage, decisions, and safety paths.
+   Reuse an existing validated design for a local change. Create or revise the five-stage
+   design only when the requested behavior changes that design.
+2. Derive a scoped ChangeContract from the request, with planned requirement and test IDs
+   for new behavior. Read `.agents/skills/robotics-change-plan/SKILL.md` and run
+   `tools/validate_change_contract.py --phase plan`. The user's development request
+   authorizes ordinary local implementation; the Agent must not claim the generated
+   contract is separate human approval.
+3. Read `.agents/skills/robotics-bounded-implementation/SKILL.md`, then implement
+   the behavior and meaningful regression tests in the isolated task branch.
+   Update design links to the actual code and tests, then pass the final ChangeContract
+   gate and the relevant offline and Jazzy checks. Preserve physical-output and stop gates.
+4. Read `.agents/skills/robotics-evidence-review/SKILL.md`; review the entire candidate
+   diff and test assertions in a read-only pass against the contract and trusted base.
+   Record concrete findings and whether this was a self-review, separate reviewer, or
+   OCR. Return confirmed findings to implementation, fix them
+   within scope, and rerun affected checks; validate the final evidence snapshot.
+5. Deliver the changed code, test evidence, review findings and dispositions, remaining
+   risks, and the exact branch or revision. Human merge and hardware decisions remain
+   separate. Do not claim an independent review when only self-review ran.
+
+Stop and request a specific decision if the requirement needs unknown safety authority,
+physical limits, real hardware access, or a change outside the authorized scope. Keep
+working on independent parts of the task while such a decision is pending.
+
 ## Safety boundary
 
 - Default to simulation, fake transports, or offline replay.

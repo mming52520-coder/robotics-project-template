@@ -3,16 +3,17 @@
   "design_package_ref": "examples/warehouse-tote/design-package.json",
   "design_package_sha256": "ec1cc69ace899fa7a1f9f478ce58b3fe3ad146d3cc6bd0efbb3404feb2d8c5a0",
   "base_revision": "c41341f8d586fe03ab5b355a921ec84aafbca79f",
-  "objective": "Bind a bounded AI-assisted repository change to design requirements, executable checks, immutable test evidence, and read-only review.",
+  "objective": "Let a local coding Agent turn a user's bounded robotics requirement into code, tests, reviewed fixes, and snapshot-bound evidence.",
   "in_scope": [
     "Versioned design-only compatibility and v2 implementation readiness checks",
     "A scoped ChangeContract and deterministic local/CI evidence manifests",
     "Repository Skills and optional read-only review handoff",
+    "Direct local requirement-to-code and review routing with plan and final contract gates",
     "Repository-side PR and governance documentation"
   ],
   "out_of_scope": [
     "ROS control behavior, physical devices, production parameters, and hardware output",
-    "Automatic model-driven source repair, commit, push, merge, or release",
+    "Unbounded source repair, automatic push, merge, or release",
     "Live GitHub ruleset changes before candidate CI is verified"
   ],
   "allowed_paths": [

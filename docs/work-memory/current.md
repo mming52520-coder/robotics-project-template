@@ -16,6 +16,11 @@ The separate `codex/ai-delivery-chain` worktree proposes a bounded ChangeContrac
 offline and ROS evidence, three delivery Skills, and optional read-only OCR review. Local
 offline and Jazzy checks passed on this local candidate; fresh GitHub CI remains
 pending. This is a starting point, not a complete navigation system.
+The follow-on local `codex/agent-requirement-delivery` branch routes a plain-language
+development request through code generation, checks, a read-only review pass, bounded
+fixes, and final evidence. A plan-phase contract can now reference planned test IDs;
+the final gate still requires implemented tests. This is repository guidance for an
+AGENTS.md-aware Agent, not an unattended model service.
 
 ## Evidence
 
@@ -34,6 +39,10 @@ pending. This is a starting point, not a complete navigation system.
   YAML, Markdown, ShellCheck, four Jazzy ROS tests, and JUnit requirement links passed
   locally. Raw logs and manifests are in ignored `artifacts/`; the candidate report is
   `docs/acceptance/ai-delivery-chain.md`. These results do not establish remote CI status.
+- Requirement-to-code candidate: 53 offline unit tests, Skills and contract checks,
+  lint, and four Jazzy simulation tests passed locally. The plan/final regression uses
+  a real planned warehouse-tote requirement and test. A positive Agent workflow case
+  is defined but has not been run with a separate Agent; self-review is not independent.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
 - GitHub Actions for PR #18 at `1b23621`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
 
@@ -52,6 +61,8 @@ The acceptance worktree additionally requires fresh GitHub CI with uploaded JUni
 The AI delivery candidate also needs trusted-base inspection of its validators, Schemas,
 CI, review rule, and tests. OCR CLI and Agent behavior evaluation were not run locally;
 GitHub ruleset and repository-template settings were not changed.
+The requirement-to-code branch is still local; other users cloning remote `main` will
+not receive this workflow until it is reviewed and merged.
 
 ## Next Actions
 
@@ -61,6 +72,9 @@ GitHub ruleset and repository-template settings were not changed.
 3. Run the five Skills in order. Verify: completed DesignPackage validation passes.
 4. Extend the synthetic ROS graph only from validated project requirements. Verify: offline logic, real ROS graph, and installed launch checks cover each new behavior.
 5. Review project-specific risks and plan simulation evidence before any physical trial. Verify: the verification plan names evidence and human gates.
+6. Give an AGENTS.md-aware coding Agent a bounded simulation requirement in this checkout.
+   Verify: it changes source and regression tests, produces a review record, and reports
+   final snapshot evidence rather than stopping at a plan.
 
 ## Verification
 
