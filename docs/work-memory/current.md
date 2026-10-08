@@ -65,7 +65,7 @@ the isolated test clone and is not part of this candidate.
 - Independent review follow-up: 56 offline unit tests, contract/public checks,
   Ruff, YAML, Markdown, and ShellCheck passed. Four Jazzy simulation tests,
   including synthetic safety-status loss and reset, passed. This is local
-  evidence; independent human review and fresh remote CI remain outstanding.
+  evidence; independent human review remains outstanding.
   Independent follow-up found that a PR's fork base can differ from the next
   main push's prior tip. The push gate now checks all paths against the trusted
   event range while accepting an older contract base that precedes that tip.
@@ -78,6 +78,12 @@ the isolated test clone and is not part of this candidate.
   `docs/acceptance/independent-agent-evaluation.md`.
 - Installed launch smoke: three `/sim` nodes appeared, installed `max_linear_mps` resolved to 0.6, and `/sim/cmd_safe` published zero at rest.
 - GitHub Actions for PR #18 at `1b23621`: `validate-template` and `ros2-simulation` passed; the ROS job reported 2 tests and 0 failures.
+- PR #19 on `codex/hardware-protocol-handoff`: its first remote run exposed a
+  Python executable alias mismatch in offline evidence validation and Git
+  ownership protection in the ROS container. Workflow commit `2a920c6`
+  corrected both. Run `37749992397` passed both jobs; uploaded manifests
+  share PR merge-test SHA `6e0f22a` and snapshot digest `830a7ce2`, and its
+  JUnit artifact has four cases with zero failures, errors, or skips.
 
 ## Decisions
 
@@ -92,7 +98,8 @@ preserving the model-free public DesignPackage and physical-output gate.
 ## Blockers
 
 Real robot requirements, localization, navigation, sensor integration, calibration, electrical design approval, and physical trial authorization remain project-specific and must stay outside this public template until independently specified and verified.
-The acceptance worktree additionally requires fresh GitHub CI with uploaded JUnit evidence before merge.
+The candidate requires fresh GitHub CI with uploaded JUnit evidence on its
+final proposed commit before merge.
 The AI delivery candidate also needs trusted-base inspection of its validators, Schemas,
 CI, review rule, and tests. OCR CLI and Agent behavior evaluation were not run locally;
 GitHub ruleset and repository-template settings were not changed.
@@ -100,10 +107,11 @@ The requirement-to-code branch is still local; other users cloning remote `main`
 not receive this workflow until it is reviewed and merged.
 No project-specific hardware requirements, selected device, received protocol,
 calibration, electrical approval, or physical-trial authorization exists in this
-template. A separate reviewer and fresh remote CI remain pending for this candidate.
+template. An independent human reviewer and final-head remote CI remain
+merge gates for this candidate.
 The first independent Agent coding probe was blocked on the now-fixed historical
 contract-test fixture; a fresh local rerun passed. Its self-review does not
-replace the required independent human review or fresh remote CI.
+replace the required independent human review or final-head remote CI.
 
 ## Next Actions
 

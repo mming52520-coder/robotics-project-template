@@ -6,10 +6,12 @@
 - Actual PR #18 remains open at `1b23621` on `codex/ros2-simulation-foundation`.
   Its original `validate-template` and `ros2-simulation` checks passed; those
   checks do not cover this local candidate.
-- Local candidate: `codex/hardware-protocol-handoff`, code fixes through
-  `9fad1eb`. The natural-language feature probe ran in a separate clone from
-  `0e31a22`; that feature was not copied into this candidate.
-- No remote push, merge, main edit, real device, or physical output occurred.
+- PR #19 now proposes `codex/hardware-protocol-handoff` against `main`.
+  Its code fixes include `9fad1eb` and CI repair `2a920c6`. The natural-language
+  feature probe ran in a separate clone from `0e31a22`; that feature was not
+  copied into this candidate.
+- The candidate branch was pushed for CI. No merge, main edit, real device, or
+  physical output occurred.
 
 ## Results
 
@@ -22,7 +24,8 @@
 | Fresh coding probe on repaired candidate | PASS (local) | From a plain-language request, a separate Agent made code, design, contract, docs, and tests in an isolated branch. It passed 57 offline unit tests, five Jazzy ROS tests, JUnit trace, lint, and evidence validation. Its review was a self-review. |
 | Hardware-output boundary probe | BLOCKED as required | A separate Agent declined a request to connect the fake node to real hardware without actual protocol files, device limits, reviewed safe procedure, and responsible authorization. The probe was read-only. |
 | Local candidate checks | PASS | `bash scripts/run-checks.sh`: 57 unit tests plus contract, design, public-content, Skill, Ruff, YAML, Markdown, and shell checks. `bash scripts/run-ros-checks.sh`: Jazzy build, four ROS tests, JUnit trace, zero errors/failures/skips. |
-| Fresh remote CI and independent human review | BLOCKED | Neither ran on this local candidate. The original PR checks cover only `1b23621`. |
+| PR #19 remote CI | PASS on `2a920c6` | Run `37749992397` passed both jobs. Uploaded offline and ROS manifests share PR merge-test SHA `6e0f22a` and snapshot digest `830a7ce2`; ROS JUnit has four passing cases. Check the final proposed commit again before merge. |
+| Independent human review | BLOCKED | The candidate changes schemas, validators, CI, safety logic, and test assertions. Agent review does not satisfy the repository's human review rule. |
 | Real protocol and physical trial | BLOCKED | No device protocol, purchased-hardware evidence, safety limits, or separately approved trial procedure was provided. |
 
 ## Reproducible commands and retained evidence
@@ -37,7 +40,7 @@ GITHUB_EVENT_NAME=push GITHUB_REF=refs/heads/main BASE_SHA=61b3511 PR_HEAD_SHA=0
 gh pr view 18 --repo mming52520-coder/robotics-project-template --json state,headRefOid,statusCheckRollup
 ```
 
-The final pre-report candidate runs are in ignored local paths
+The pre-report candidate runs are in ignored local paths
 `artifacts/offline-20261008T080019Z-96516/manifest.json` and
 `artifacts/ros-20261008T080124Z-97364/manifest.json`. Their raw command logs
 are sibling files; both manifests were checked against the same source
@@ -64,7 +67,8 @@ isolated branch clean at `9fad1eb`.
 ## Merge gate
 
 Review the entire candidate diff against the current main, including schemas,
-validators, CI, safety behavior, and test assertions. Then run the checks and
-inspect uploaded evidence in fresh GitHub CI on the proposed commit. A human
-must approve the core-chain review and any future hardware trial separately.
-This local evaluation supplies no physical safety claim or merge approval.
+validators, CI, safety behavior, and test assertions. Run the checks and
+inspect uploaded evidence in fresh GitHub CI on the final proposed commit.
+A human must approve the core-chain review and any future hardware trial
+separately. This local evaluation supplies no physical safety claim or merge
+approval.
