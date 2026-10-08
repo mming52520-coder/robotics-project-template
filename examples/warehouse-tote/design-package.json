@@ -1,5 +1,5 @@
 {
-  "schema_version": "v1",
+  "schema_version": "v2",
   "brief_id": "warehouse-tote-v1",
   "assumptions": [
     {
@@ -15,10 +15,22 @@
   "system_architecture": {
     "reference": "ros2",
     "components": [
-      {"name": "mission manager", "responsibility": "accept station goals and report task state"},
-      {"name": "localization", "responsibility": "publish pose with uncertainty"},
-      {"name": "navigation", "responsibility": "plan and track a collision-aware route"},
-      {"name": "safety gate", "responsibility": "gate all motion before the base interface"}
+      {
+        "name": "mission manager",
+        "responsibility": "accept station goals and report task state"
+      },
+      {
+        "name": "localization",
+        "responsibility": "publish pose with uncertainty"
+      },
+      {
+        "name": "navigation",
+        "responsibility": "plan and track a collision-aware route"
+      },
+      {
+        "name": "safety gate",
+        "responsibility": "gate all motion before the base interface"
+      }
     ]
   },
   "interfaces": [
@@ -29,7 +41,127 @@
       "data": "linear and angular velocity",
       "units": "m/s and rad/s",
       "frame": "base frame",
-      "failure_behavior": "expire the request and command zero motion"
+      "failure_behavior": "expire the request and command zero motion",
+      "id": "IF-PLAN-CMD",
+      "requirement_ids": [
+        "REQ-PLAN-NAV"
+      ],
+      "owner": "navigation",
+      "freshness": "Request expiry to be defined before navigation integration"
+    },
+    {
+      "id": "IF-SIM-REQUEST",
+      "requirement_ids": [
+        "REQ-SIM-BOUND"
+      ],
+      "name": "simulated motion request",
+      "owner": "safety gate",
+      "producer": "test or operator",
+      "consumer": "safety gate",
+      "data": "linear x and angular z",
+      "units": "m/s and rad/s",
+      "frame": "base_link",
+      "freshness": "expires after 0.25 s",
+      "failure_behavior": "reject invalid request and publish zero",
+      "ros_name": "/sim/cmd_request"
+    },
+    {
+      "id": "IF-SIM-SAFE",
+      "requirement_ids": [
+        "REQ-SIM-BOUND",
+        "REQ-SIM-STOP"
+      ],
+      "name": "gated motion",
+      "owner": "fake base",
+      "producer": "safety gate",
+      "consumer": "fake base",
+      "data": "linear x and angular z",
+      "units": "m/s and rad/s",
+      "frame": "base_link",
+      "freshness": "published at 20 Hz; fake base expires after 0.2 s",
+      "failure_behavior": "zero on fault or stale input",
+      "ros_name": "/sim/cmd_safe"
+    },
+    {
+      "id": "IF-SIM-ESTOP",
+      "requirement_ids": [
+        "REQ-SIM-ESTOP"
+      ],
+      "name": "synthetic emergency stop",
+      "owner": "safety gate",
+      "producer": "sim environment",
+      "consumer": "safety gate",
+      "data": "asserted state",
+      "units": "boolean",
+      "frame": "not applicable",
+      "freshness": "status expires after 0.3 s",
+      "failure_behavior": "latch stop when asserted or stale",
+      "ros_name": "/sim/emergency_stop"
+    },
+    {
+      "id": "IF-SIM-HEALTH",
+      "requirement_ids": [
+        "REQ-SIM-FAULT"
+      ],
+      "name": "synthetic health",
+      "owner": "safety gate",
+      "producer": "sim environment",
+      "consumer": "safety gate",
+      "data": "health state",
+      "units": "boolean",
+      "frame": "not applicable",
+      "freshness": "status expires after 0.3 s",
+      "failure_behavior": "zero and discard command on unhealthy or stale",
+      "ros_name": "/sim/health_ok"
+    },
+    {
+      "id": "IF-SIM-OBSTACLE",
+      "requirement_ids": [
+        "REQ-SIM-FAULT"
+      ],
+      "name": "synthetic obstacle clearance",
+      "owner": "safety gate",
+      "producer": "sim environment",
+      "consumer": "safety gate",
+      "data": "clearance state",
+      "units": "boolean",
+      "frame": "not applicable",
+      "freshness": "status expires after 0.3 s",
+      "failure_behavior": "zero and discard command on blocked or stale",
+      "ros_name": "/sim/obstacle_clear"
+    },
+    {
+      "id": "IF-SIM-ODOM",
+      "requirement_ids": [
+        "REQ-SIM-FAKE"
+      ],
+      "name": "synthetic odometry",
+      "owner": "observer",
+      "producer": "fake base",
+      "consumer": "observer",
+      "data": "pose and twist",
+      "units": "m, rad, m/s and rad/s",
+      "frame": "odom to base_link",
+      "freshness": "published at 20 Hz; no measured feedback",
+      "failure_behavior": "treat as simulation only",
+      "ros_name": "/sim/odom"
+    },
+    {
+      "id": "IF-SIM-RESET",
+      "requirement_ids": [
+        "REQ-SIM-ESTOP",
+        "REQ-SIM-RESTART"
+      ],
+      "name": "stop reset",
+      "owner": "safety gate",
+      "producer": "operator",
+      "consumer": "safety gate",
+      "data": "reset request and result",
+      "units": "not applicable",
+      "frame": "not applicable",
+      "freshness": "requires fresh clear status at call time",
+      "failure_behavior": "refuse reset while unsafe; require fresh command",
+      "ros_name": "/sim/reset_estop"
     }
   ],
   "algorithm_plan": [
@@ -37,31 +169,65 @@
       "function": "state estimation",
       "choice": "fuse wheel motion and inertial motion with external map observations",
       "rationale": "Supports bounded indoor routes while preserving an uncertainty signal.",
-      "prerequisites": ["time synchronization", "frame calibration", "replay data"],
-      "failure_behavior": "raise degraded-localization state and stop autonomous navigation"
+      "prerequisites": [
+        "time synchronization",
+        "frame calibration",
+        "replay data"
+      ],
+      "failure_behavior": "raise degraded-localization state and stop autonomous navigation",
+      "id": "ALG-PLAN-LOCALIZE",
+      "requirement_ids": [
+        "REQ-PLAN-LOCALIZE"
+      ]
     },
     {
       "function": "navigation",
       "choice": "global route planning plus local collision-aware tracking",
       "rationale": "Separates route intent from short-horizon obstacle response.",
-      "prerequisites": ["validated map", "obstacle observations", "velocity limits"],
-      "failure_behavior": "stop and request operator intervention when no safe progress exists"
+      "prerequisites": [
+        "validated map",
+        "obstacle observations",
+        "velocity limits"
+      ],
+      "failure_behavior": "stop and request operator intervention when no safe progress exists",
+      "id": "ALG-PLAN-NAV",
+      "requirement_ids": [
+        "REQ-PLAN-NAV"
+      ]
     }
   ],
   "hardware_functional_plan": [
     {
       "function": "base motion feedback",
-      "performance_requirements": ["report wheel motion with timestamps", "report fault state"],
+      "performance_requirements": [
+        "report wheel motion with timestamps",
+        "report fault state"
+      ],
       "interface": "isolated vehicle feedback interface",
-      "environmental_requirements": ["indoor dust and vibration tolerance"],
-      "degradation": "disable autonomous motion when feedback integrity is lost"
+      "environmental_requirements": [
+        "indoor dust and vibration tolerance"
+      ],
+      "degradation": "disable autonomous motion when feedback integrity is lost",
+      "id": "HW-PLAN-FEEDBACK",
+      "requirement_ids": [
+        "REQ-PLAN-HW"
+      ]
     },
     {
       "function": "obstacle observation",
-      "performance_requirements": ["cover intended stopping envelope", "publish freshness and confidence"],
+      "performance_requirements": [
+        "cover intended stopping envelope",
+        "publish freshness and confidence"
+      ],
       "interface": "timestamped observation stream",
-      "environmental_requirements": ["handle expected indoor lighting and reflective surfaces"],
-      "degradation": "reduce speed or stop when observation quality is insufficient"
+      "environmental_requirements": [
+        "handle expected indoor lighting and reflective surfaces"
+      ],
+      "degradation": "reduce speed or stop when observation quality is insufficient",
+      "id": "HW-PLAN-OBSERVATION",
+      "requirement_ids": [
+        "REQ-PLAN-HW"
+      ]
     }
   ],
   "safety_plan": {
@@ -69,16 +235,365 @@
     "control_authority": "teleoperation, navigation, and recovery requests pass through one safety gate",
     "stop_behavior": "stale commands, obstacle stop, emergency stop, and critical diagnostics command zero motion",
     "watchdog": "the motion interface expires commands without a fresh bounded request",
-    "fault_recovery": "require a documented reset and a safe-state check before motion is re-enabled"
+    "fault_recovery": "require a documented reset and a safe-state check before motion is re-enabled",
+    "id": "SAFE-SIM",
+    "requirement_ids": [
+      "REQ-SIM-BOUND",
+      "REQ-SIM-STOP",
+      "REQ-SIM-ESTOP",
+      "REQ-SIM-FAULT",
+      "REQ-SIM-RESTART",
+      "REQ-SIM-FAKE"
+    ],
+    "max_linear_mps": 0.6,
+    "max_angular_radps": 1.0,
+    "command_timeout_s": 0.25,
+    "status_timeout_s": 0.3
   },
   "verification_plan": {
     "unit": "validate units, bounds, request expiry, and state transitions",
     "integration": "exercise fake motion and observation transports",
     "simulation": "run representative station routes with injected observation and localization faults",
     "replay": "compare candidate behavior against timestamped synthetic scenarios",
-    "manual_safety_review": "review physical trial procedure before enabling any hardware output"
+    "manual_safety_review": "review physical trial procedure before enabling any hardware output",
+    "checks": [
+      {
+        "id": "T-SIM-START",
+        "requirement_ids": [
+          "REQ-SIM-STOP",
+          "REQ-SIM-FAKE"
+        ],
+        "level": "integration",
+        "scenario": "Installed launch starts three nodes and publishes zero at rest.",
+        "acceptance": "Installed launch starts three nodes and publishes zero at rest.",
+        "evidence": "build/robotics_sim/test_results/robotics_sim/pytest.xml",
+        "status": "implemented",
+        "test_node": "src/robotics_sim/test/test_installed_launch.py::InstalledLaunchTest::test_installed_graph_starts_at_zero",
+        "preconditions": "ROS 2 Jazzy package is built and installed; only synthetic nodes are launched."
+      },
+      {
+        "id": "T-SIM-GRAPH",
+        "requirement_ids": [
+          "REQ-SIM-BOUND",
+          "REQ-SIM-STOP",
+          "REQ-SIM-ESTOP",
+          "REQ-SIM-FAULT",
+          "REQ-SIM-FAKE"
+        ],
+        "level": "integration",
+        "scenario": "Graph rejects bad motion and faults, latches E-stop, resets safely, expires commands, and loses then restores synthetic safety status.",
+        "acceptance": "A stale safety-status stream stops motion and does not restore an old command; after status resumes, E-stop remains latched until explicit reset and a fresh command. Other faults and command expiry also stop motion.",
+        "evidence": "build/robotics_sim/test_results/robotics_sim/pytest.xml",
+        "status": "implemented",
+        "test_node": "src/robotics_sim/test/test_sim_graph.py::SimGraphTest::test_faults_stop_and_require_fresh_motion",
+        "preconditions": "Synthetic safety inputs are fresh; reset is called only after clear status."
+      },
+      {
+        "id": "T-SIM-RESTART",
+        "requirement_ids": [
+          "REQ-SIM-ESTOP",
+          "REQ-SIM-RESTART"
+        ],
+        "level": "integration",
+        "scenario": "Recreated gate stays at zero until safe reset and fresh command.",
+        "acceptance": "Recreated gate stays at zero until safe reset and fresh command.",
+        "evidence": "build/robotics_sim/test_results/robotics_sim/pytest.xml",
+        "status": "implemented",
+        "test_node": "src/robotics_sim/test/test_sim_graph.py::SimGraphTest::test_restart_requires_reset",
+        "preconditions": "Synthetic environment publishes fresh clear status; no physical output exists."
+      },
+      {
+        "id": "T-PLAN-LOCALIZE",
+        "requirement_ids": [
+          "REQ-PLAN-LOCALIZE"
+        ],
+        "level": "simulation",
+        "scenario": "Inject localization loss",
+        "acceptance": "Autonomous navigation stays inhibited",
+        "evidence": "Future localization simulation JUnit",
+        "status": "planned",
+        "preconditions": "Localization-loss fixture and fake transport must be defined before execution."
+      },
+      {
+        "id": "T-PLAN-NAV",
+        "requirement_ids": [
+          "REQ-PLAN-NAV"
+        ],
+        "level": "simulation",
+        "scenario": "Inject blocked route",
+        "acceptance": "Navigation requests zero motion",
+        "evidence": "Future navigation simulation JUnit",
+        "status": "planned",
+        "preconditions": "Blocked-route fixture and fake transport must be defined before execution."
+      },
+      {
+        "id": "T-PLAN-HW",
+        "requirement_ids": [
+          "REQ-PLAN-HW"
+        ],
+        "level": "manual",
+        "scenario": "Review feedback and obstacle requirements",
+        "acceptance": "Engineer approves measurable requirements",
+        "evidence": "Future human review record",
+        "status": "planned",
+        "preconditions": "Measurable hardware requirements and human reviewer must be identified."
+      },
+      {
+        "id": "T-SIM-PROC-RESTART",
+        "requirement_ids": [
+          "REQ-SIM-ESTOP",
+          "REQ-SIM-RESTART"
+        ],
+        "level": "integration",
+        "scenario": "Terminate the safety-gate process during synthetic motion and start a new process",
+        "acceptance": "The new process publishes zero and rejects motion until safe reset and a fresh request",
+        "evidence": "build/robotics_sim/test_results/robotics_sim/pytest.xml",
+        "status": "implemented",
+        "test_node": "src/robotics_sim/test/test_installed_launch.py::InstalledLaunchTest::test_gate_process_restart_requires_reset",
+        "preconditions": "Synthetic environment and fake base are running; motion remains inside the simulation graph."
+      }
+    ]
   },
   "open_decisions": [
-    "Confirm stopping distance from measured braking behavior before physical trials."
+    {
+      "id": "DEC-PHYSICAL-STOP",
+      "statement": "Confirm stopping distance from measured braking behavior before physical trials.",
+      "blocks_implementation": true,
+      "requirement_ids": [
+        "REQ-PLAN-HW"
+      ],
+      "closure_evidence": "Reviewed braking measurement and stop-distance record before physical integration."
+    }
+  ],
+  "traceability": [
+    {
+      "requirement_id": "REQ-SIM-BOUND",
+      "design_ids": [
+        "IF-SIM-REQUEST",
+        "IF-SIM-SAFE",
+        "SAFE-SIM"
+      ],
+      "ros_interfaces": [
+        "/sim/cmd_request",
+        "/sim/cmd_safe"
+      ],
+      "implementation": [
+        {
+          "file": "src/robotics_sim/robotics_sim/core.py",
+          "symbol": "SafetyGate.receive_command"
+        },
+        {
+          "file": "src/robotics_sim/robotics_sim/safety_gate.py",
+          "symbol": "SafetyGateNode._command"
+        }
+      ],
+      "test_ids": [
+        "T-SIM-GRAPH"
+      ],
+      "evidence_artifact": "build/robotics_sim/test_results/robotics_sim/pytest.xml"
+    },
+    {
+      "requirement_id": "REQ-SIM-STOP",
+      "design_ids": [
+        "IF-SIM-SAFE",
+        "SAFE-SIM"
+      ],
+      "ros_interfaces": [
+        "/sim/cmd_safe"
+      ],
+      "implementation": [
+        {
+          "file": "src/robotics_sim/robotics_sim/core.py",
+          "symbol": "SafetyGate.output"
+        },
+        {
+          "file": "src/robotics_sim/robotics_sim/core.py",
+          "symbol": "FakeBase.step"
+        }
+      ],
+      "test_ids": [
+        "T-SIM-START",
+        "T-SIM-GRAPH"
+      ],
+      "evidence_artifact": "build/robotics_sim/test_results/robotics_sim/pytest.xml"
+    },
+    {
+      "requirement_id": "REQ-SIM-ESTOP",
+      "design_ids": [
+        "IF-SIM-ESTOP",
+        "IF-SIM-RESET",
+        "SAFE-SIM"
+      ],
+      "ros_interfaces": [
+        "/sim/emergency_stop",
+        "/sim/reset_estop"
+      ],
+      "implementation": [
+        {
+          "file": "src/robotics_sim/robotics_sim/core.py",
+          "symbol": "SafetyGate.receive_estop"
+        },
+        {
+          "file": "src/robotics_sim/robotics_sim/core.py",
+          "symbol": "SafetyGate.reset_estop"
+        }
+      ],
+      "test_ids": [
+        "T-SIM-GRAPH",
+        "T-SIM-RESTART",
+        "T-SIM-PROC-RESTART"
+      ],
+      "evidence_artifact": "build/robotics_sim/test_results/robotics_sim/pytest.xml"
+    },
+    {
+      "requirement_id": "REQ-SIM-FAULT",
+      "design_ids": [
+        "IF-SIM-HEALTH",
+        "IF-SIM-OBSTACLE",
+        "SAFE-SIM"
+      ],
+      "ros_interfaces": [
+        "/sim/health_ok",
+        "/sim/obstacle_clear"
+      ],
+      "implementation": [
+        {
+          "file": "src/robotics_sim/robotics_sim/core.py",
+          "symbol": "SafetyGate.receive_health"
+        },
+        {
+          "file": "src/robotics_sim/robotics_sim/core.py",
+          "symbol": "SafetyGate.receive_obstacle"
+        }
+      ],
+      "test_ids": [
+        "T-SIM-GRAPH"
+      ],
+      "evidence_artifact": "build/robotics_sim/test_results/robotics_sim/pytest.xml"
+    },
+    {
+      "requirement_id": "REQ-SIM-RESTART",
+      "design_ids": [
+        "IF-SIM-RESET",
+        "SAFE-SIM"
+      ],
+      "ros_interfaces": [
+        "/sim/reset_estop"
+      ],
+      "implementation": [
+        {
+          "file": "src/robotics_sim/robotics_sim/core.py",
+          "symbol": "SafetyGate.__init__"
+        },
+        {
+          "file": "src/robotics_sim/robotics_sim/safety_gate.py",
+          "symbol": "SafetyGateNode.__init__"
+        }
+      ],
+      "test_ids": [
+        "T-SIM-RESTART",
+        "T-SIM-PROC-RESTART"
+      ],
+      "evidence_artifact": "build/robotics_sim/test_results/robotics_sim/pytest.xml"
+    },
+    {
+      "requirement_id": "REQ-SIM-FAKE",
+      "design_ids": [
+        "IF-SIM-ODOM",
+        "SAFE-SIM"
+      ],
+      "ros_interfaces": [
+        "/sim/odom"
+      ],
+      "implementation": [
+        {
+          "file": "src/robotics_sim/robotics_sim/core.py",
+          "symbol": "FakeBase.step"
+        },
+        {
+          "file": "src/robotics_sim/robotics_sim/fake_base.py",
+          "symbol": "FakeBaseNode._step"
+        }
+      ],
+      "test_ids": [
+        "T-SIM-START",
+        "T-SIM-GRAPH"
+      ],
+      "evidence_artifact": "build/robotics_sim/test_results/robotics_sim/pytest.xml"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ-SIM-BOUND",
+      "source": "/vehicle_constraints/maximum_speed_mps",
+      "statement": "Bound simulated velocity to the reviewed speed limit.",
+      "status": "implemented",
+      "scope": "simulation-only",
+      "acceptance": "A request above the reviewed linear or angular limit is rejected and safe output remains zero."
+    },
+    {
+      "id": "REQ-SIM-STOP",
+      "source": "/safety_context/speed_limit",
+      "statement": "Expire stale or unsafe motion to zero.",
+      "status": "implemented",
+      "scope": "simulation-only",
+      "acceptance": "A stale command or safety status produces zero safe velocity; fake-base command expiry produces zero synthetic odometry velocity."
+    },
+    {
+      "id": "REQ-SIM-ESTOP",
+      "source": "/safety_context/emergency_stop",
+      "statement": "Latch emergency stop until explicit safe reset.",
+      "status": "implemented",
+      "scope": "simulation-only",
+      "acceptance": "An asserted emergency stop latches zero output until fresh clear inputs, explicit reset, and a new command."
+    },
+    {
+      "id": "REQ-SIM-FAULT",
+      "source": "/required_capabilities/3",
+      "statement": "Stop on synthetic health or obstacle fault.",
+      "status": "implemented",
+      "scope": "simulation-only",
+      "acceptance": "A synthetic health or obstacle fault clears the previous command and produces zero safe output."
+    },
+    {
+      "id": "REQ-SIM-RESTART",
+      "source": "/safety_context/emergency_stop",
+      "statement": "Require reset after a safety-gate restart.",
+      "status": "implemented",
+      "scope": "simulation-only",
+      "acceptance": "A recreated safety gate publishes zero and rejects motion until safe reset and a new request."
+    },
+    {
+      "id": "REQ-SIM-FAKE",
+      "source": "/safety_context/physical_output",
+      "statement": "Keep motion confined to a fake base and synthetic odometry.",
+      "status": "implemented",
+      "scope": "simulation-only",
+      "acceptance": "Only the fake base integrates gated commands and publishes synthetic odometry; no actuator path is present."
+    },
+    {
+      "id": "REQ-PLAN-LOCALIZE",
+      "source": "/required_capabilities/1",
+      "statement": "Design localization before autonomous operation.",
+      "status": "planned",
+      "scope": "design-only; not implemented",
+      "acceptance": "A future localization-loss simulation inhibits autonomous motion and records the loss."
+    },
+    {
+      "id": "REQ-PLAN-NAV",
+      "source": "/required_capabilities/2",
+      "statement": "Design point-to-point navigation before autonomous operation.",
+      "status": "planned",
+      "scope": "design-only; not implemented",
+      "acceptance": "A future blocked-route simulation requests zero motion and records the blockage."
+    },
+    {
+      "id": "REQ-PLAN-HW",
+      "source": "/vehicle_constraints/kinematics",
+      "statement": "Specify feedback and observation functions before hardware selection.",
+      "status": "planned",
+      "scope": "design-only; not implemented",
+      "acceptance": "An engineer approves measurable feedback and observation requirements before hardware selection."
+    }
   ]
 }

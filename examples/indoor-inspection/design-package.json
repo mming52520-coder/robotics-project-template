@@ -1,12 +1,151 @@
 {
-  "schema_version": "v1",
+  "schema_version": "v2",
   "brief_id": "indoor-inspection-v1",
-  "assumptions": [{"statement": "The route is bounded and reviewed before simulation.", "status": "confirmed", "evidence": "DesignBrief mission.summary"}],
-  "system_architecture": {"reference": "ros2", "components": [{"name": "route manager", "responsibility": "sequence inspection goals"}, {"name": "localization", "responsibility": "publish pose uncertainty"}, {"name": "diagnostics", "responsibility": "report system health"}, {"name": "safety gate", "responsibility": "gate base requests"}]},
-  "interfaces": [{"name": "route progress", "producer": "route manager", "consumer": "operator interface", "data": "goal state and diagnostic summary", "units": "not applicable", "frame": "map frame", "failure_behavior": "report unknown progress and halt autonomous route"}],
-  "algorithm_plan": [{"function": "localization", "choice": "fuse bounded motion estimates with map observations", "rationale": "Maintains a measurable pose confidence for route repetition.", "prerequisites": ["frame calibration", "time synchronization", "map review"], "failure_behavior": "halt autonomous route on degraded localization"}],
-  "hardware_functional_plan": [{"function": "system health reporting", "performance_requirements": ["report compute, power, and observation freshness"], "interface": "timestamped diagnostic stream", "environmental_requirements": ["indoor operating range"], "degradation": "halt autonomous route when critical health is unavailable"}],
-  "safety_plan": {"physical_output": "disabled_by_default", "control_authority": "operator and route requests pass through one safety gate", "stop_behavior": "critical diagnostics and stale requests command zero motion", "watchdog": "the base interface expires stale requests", "fault_recovery": "require a documented reset before route continuation"},
-  "verification_plan": {"unit": "check diagnostic state transitions", "integration": "exercise fake diagnostic and base transports", "simulation": "run the route with degraded localization", "replay": "replay synthetic diagnostic loss", "manual_safety_review": "review physical procedure separately"},
-  "open_decisions": ["Define the operator progress display outside the motion-control boundary."]
+  "assumptions": [
+    {
+      "statement": "The route is bounded and reviewed before simulation.",
+      "status": "confirmed",
+      "evidence": "DesignBrief mission.summary"
+    }
+  ],
+  "system_architecture": {
+    "reference": "ros2",
+    "components": [
+      {
+        "name": "route manager",
+        "responsibility": "sequence inspection goals"
+      },
+      {
+        "name": "localization",
+        "responsibility": "publish pose uncertainty"
+      },
+      {
+        "name": "diagnostics",
+        "responsibility": "report system health"
+      },
+      {
+        "name": "safety gate",
+        "responsibility": "gate base requests"
+      }
+    ]
+  },
+  "interfaces": [
+    {
+      "name": "route progress",
+      "producer": "route manager",
+      "consumer": "operator interface",
+      "data": "goal state and diagnostic summary",
+      "units": "not applicable",
+      "frame": "map frame",
+      "failure_behavior": "report unknown progress and halt autonomous route",
+      "id": "IF-PLAN-REQUEST",
+      "requirement_ids": [
+        "REQ-PLAN-ROUTE"
+      ],
+      "owner": "route manager",
+      "freshness": "Timestamp and expiry must be defined before integration"
+    }
+  ],
+  "algorithm_plan": [
+    {
+      "function": "localization",
+      "choice": "fuse bounded motion estimates with map observations",
+      "rationale": "Maintains a measurable pose confidence for route repetition.",
+      "prerequisites": [
+        "frame calibration",
+        "time synchronization",
+        "map review"
+      ],
+      "failure_behavior": "halt autonomous route on degraded localization",
+      "id": "ALG-PLAN-PRIMARY",
+      "requirement_ids": [
+        "REQ-PLAN-ROUTE"
+      ]
+    }
+  ],
+  "hardware_functional_plan": [
+    {
+      "function": "system health reporting",
+      "performance_requirements": [
+        "report compute, power, and observation freshness"
+      ],
+      "interface": "timestamped diagnostic stream",
+      "environmental_requirements": [
+        "indoor operating range"
+      ],
+      "degradation": "halt autonomous route when critical health is unavailable",
+      "id": "HW-PLAN-PRIMARY",
+      "requirement_ids": [
+        "REQ-PLAN-HEALTH"
+      ]
+    }
+  ],
+  "safety_plan": {
+    "physical_output": "disabled_by_default",
+    "control_authority": "operator and route requests pass through one safety gate",
+    "stop_behavior": "critical diagnostics and stale requests command zero motion",
+    "watchdog": "the base interface expires stale requests",
+    "fault_recovery": "require a documented reset before route continuation",
+    "id": "SAFE-PLAN",
+    "requirement_ids": [
+      "REQ-PLAN-ROUTE",
+      "REQ-PLAN-HEALTH"
+    ],
+    "max_linear_mps": 0.4,
+    "max_angular_radps": 1.0,
+    "command_timeout_s": 0.25,
+    "status_timeout_s": 0.3
+  },
+  "verification_plan": {
+    "unit": "check diagnostic state transitions",
+    "integration": "exercise fake diagnostic and base transports",
+    "simulation": "run the route with degraded localization",
+    "replay": "replay synthetic diagnostic loss",
+    "manual_safety_review": "review physical procedure separately",
+    "checks": [
+      {
+        "id": "T-PLAN-DESIGN",
+        "requirement_ids": [
+          "REQ-PLAN-ROUTE",
+          "REQ-PLAN-HEALTH"
+        ],
+        "level": "simulation",
+        "scenario": "Inject stale or failed inputs with fake transports",
+        "acceptance": "Motion is inhibited and evidence identifies the fault",
+        "evidence": "Future simulation JUnit",
+        "status": "planned",
+        "preconditions": "Stale-input fixture and fake transport must be defined before execution."
+      }
+    ]
+  },
+  "open_decisions": [
+    {
+      "id": "DEC-OPERATOR-DISPLAY",
+      "statement": "Define the operator progress display outside the motion-control boundary.",
+      "blocks_implementation": false,
+      "requirement_ids": [
+        "REQ-PLAN-ROUTE"
+      ],
+      "closure_evidence": "Reviewed operator display requirement and interface design."
+    }
+  ],
+  "traceability": [],
+  "requirements": [
+    {
+      "id": "REQ-PLAN-ROUTE",
+      "source": "/required_capabilities/1",
+      "statement": "Plan a bounded inspection route.",
+      "status": "planned",
+      "scope": "design-only; not implemented",
+      "acceptance": "A future bounded-route simulation remains inside reviewed inspection bounds."
+    },
+    {
+      "id": "REQ-PLAN-HEALTH",
+      "source": "/required_capabilities/3",
+      "statement": "Specify diagnostic degradation.",
+      "status": "planned",
+      "scope": "design-only; not implemented",
+      "acceptance": "A future diagnostic fault simulation inhibits motion and identifies the fault."
+    }
+  ]
 }

@@ -1,0 +1,28 @@
+{
+  "include": [
+    "**/*.py",
+    "**/*.sh",
+    "**/*.json",
+    "**/*.yaml",
+    "**/*.yml",
+    "**/*.md",
+    "**/*.msg",
+    "**/*.srv",
+    "**/*.urdf",
+    "**/*.xacro",
+    "**/*.world"
+  ],
+  "exclude": [
+    "artifacts/**",
+    "build/**",
+    "install/**",
+    "log/**"
+  ],
+  "rules": [
+    {
+      "path": "**/*",
+      "rule": "ROBOTICS_EVIDENCE_BOUNDARY: Check the changed behavior against the DesignPackage and ChangeContract. Inspect stop, restart, timeout, fault, physical-output, assertion, and evidence-snapshot paths. Report concrete defects with file and line; do not infer physical safety from simulation.",
+      "merge_system_rule": true
+    }
+  ]
+}

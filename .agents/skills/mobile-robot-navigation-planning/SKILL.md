@@ -15,6 +15,10 @@ Read `references/navigation-choice-matrix.md` and `assets/algorithm-plan-templat
 4. Define measurable failure behavior for localization loss, stale observations, blocked route, and planner failure. Default to degraded operation or zero motion.
 5. Add model-free sensor capabilities only when they are necessary to support an algorithm prerequisite; defer unverified capability to `open_decisions`.
 6. Write the `algorithm_plan` section of the DesignPackage.
+7. When a device protocol is pending, implement independently testable algorithms
+   against the validated ROS interface contract and fake or replay inputs. Keep
+   protocol-dependent decoding, units, timing, and status mappings explicit blockers;
+   do not invent frames or silently bind an assumed device API.
 
 ## Safety and public boundary / 安全与公开边界
 

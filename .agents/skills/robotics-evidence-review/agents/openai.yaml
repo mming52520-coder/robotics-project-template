@@ -1,0 +1,4 @@
+interface:
+  display_name: "Robotics Evidence Review"
+  short_description: "Review diff, assertions, and bound evidence read-only."
+  default_prompt: "Use $robotics-evidence-review for a read-only candidate review."

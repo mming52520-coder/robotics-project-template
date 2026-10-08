@@ -7,6 +7,11 @@ import re
 import sys
 from pathlib import Path
 
+try:
+    from .public_content import is_ignored_private_file
+except ImportError:  # Direct script execution has no package context.
+    from public_content import is_ignored_private_file
+
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_PATHS = (
     ".agents/skills/README.md",
@@ -31,7 +36,7 @@ REQUIRED_PATHS = (
     "tests/replay/README.md",
     "evals/cases/01-warehouse-tote.json",
 )
-EXCLUDED_PARTS = {".git", ".venv", "__pycache__"}
+EXCLUDED_PARTS = {".git", ".venv", "__pycache__", "artifacts", "build", "install", "log"}
 SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
@@ -44,7 +49,10 @@ def scan_public_files() -> list[str]:
     findings: list[str] = []
     for path in sorted(item for item in ROOT.rglob("*") if item.is_file()):
         relative = path.relative_to(ROOT)
-        if any(part in EXCLUDED_PARTS for part in relative.parts):
+        if (
+            any(part in EXCLUDED_PARTS for part in relative.parts)
+            or is_ignored_private_file(ROOT, path)
+        ):
             continue
         if path.name == ".env" or path.suffix.lower() in {".key", ".p12", ".pem"}:
             findings.append(f"sensitive filename: {relative.as_posix()}")
@@ -57,6 +65,16 @@ def scan_public_files() -> list[str]:
             if any(pattern.search(line) for pattern in SECRET_PATTERNS):
                 findings.append(f"secret-like content: {relative.as_posix()}:{line_number}")
     return findings
+
+
+def private_configuration_errors(root: Path) -> list[str]:
+    return [
+        f"private configuration tracked or not ignored: {path.relative_to(root)}"
+        for path in (root / "config/private").rglob("*")
+        if path.is_file()
+        and path.relative_to(root).as_posix() != "config/private/README.md"
+        and not is_ignored_private_file(root, path)
+    ]
 
 
 def validate() -> list[str]:
@@ -74,14 +92,7 @@ def validate() -> list[str]:
     if "hardware_output_enabled: false" not in system_config:
         errors.append("example configuration must disable hardware output")
 
-    private_files = [
-        path
-        for path in (ROOT / "config/private").rglob("*")
-        if path.is_file() and path.name != "README.md"
-    ]
-    errors.extend(
-        f"private configuration present: {path.relative_to(ROOT)}" for path in private_files
-    )
+    errors.extend(private_configuration_errors(ROOT))
     errors.extend(scan_public_files())
     return errors
 

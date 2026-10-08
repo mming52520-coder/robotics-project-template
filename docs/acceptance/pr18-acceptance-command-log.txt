@@ -1,0 +1,244 @@
+PR #18 engineering acceptance command log
+UTC: 2026-10-08T04:25:14.701640+00:00
+Candidate: /home/a/Documents/Codex/2026-10-08/referenced-chatgpt-conversation-this-is-an/work/pr18-engineering-acceptance
+Baseline: /home/a/Documents/Codex/2026-10-08/referenced-chatgpt-conversation-this-is-an/work/robotics-project-template
+
+$ [baseline] git status --short --branch
+## main...origin/main
+exit=0
+
+$ [baseline] git rev-parse HEAD origin/main origin/pr-18
+94bd7933274bf00ece36e57bb8d78cfd4cd60594
+94bd7933274bf00ece36e57bb8d78cfd4cd60594
+1b23621273141a4f3499ebbc25be5491d6bae5b5
+exit=0
+
+$ [baseline] git diff --check origin/main...origin/pr-18
+(no output)
+exit=0
+
+$ [baseline] bash scripts/run-checks.sh
+validated 21 required paths and public-release safety defaults
+skill validation passed
+evaluation validation passed
+public content scan passed
+...........................
+----------------------------------------------------------------------
+Ran 27 tests in 0.022s
+
+OK
+wrote project facts: /tmp/tmpgtcjrmyc/research/project-facts.json
+wrote ranked architecture research: /tmp/tmpn9qah21r/research
+wrote architecture research: /tmp/tmpr7vks92p/research
+exit=0
+
+$ [candidate] git status --short --branch
+## codex/pr18-engineering-acceptance...origin/pr-18
+ M .github/workflows/ci.yml
+ M CHANGELOG.md
+ M README.md
+ M contracts/README.md
+ M contracts/design-package.schema.json
+ M docs/decisions/0003-simulation-runtime.md
+ M docs/reference/ros2-simulation.md
+ M docs/work-memory/current.md
+ M examples/indoor-inspection/design-package.json
+ M examples/narrow-delivery/design-package.json
+ M examples/warehouse-tote/design-package.json
+ M src/robotics_sim/robotics_sim/core.py
+ M src/robotics_sim/test/test_installed_launch.py
+ M src/robotics_sim/test/test_sim_graph.py
+ M tests/unit/test_design_contracts.py
+ M tests/unit/test_sim_core.py
+ M tools/design_contracts.py
+ M tools/validate_design_package.py
+?? docs/acceptance/
+?? docs/decisions/0004-design-package-v2-traceability.md
+exit=0
+
+$ [candidate] python tools/validate_design_package.py examples/warehouse-tote/design-brief.json examples/warehouse-tote/design-package.json
+design contract validation passed
+exit=0
+
+$ [candidate] python tools/validate_design_package.py examples/narrow-delivery/design-brief.json examples/narrow-delivery/design-package.json
+design contract validation passed
+exit=0
+
+$ [candidate] python tools/validate_design_package.py examples/indoor-inspection/design-brief.json examples/indoor-inspection/design-package.json
+design contract validation passed
+exit=0
+
+$ [candidate] bash scripts/run-checks.sh
+validated 21 required paths and public-release safety defaults
+skill validation passed
+evaluation validation passed
+public content scan passed
+........................................
+----------------------------------------------------------------------
+Ran 40 tests in 0.729s
+
+OK
+wrote project facts: /tmp/tmp694jjscs/research/project-facts.json
+wrote ranked architecture research: /tmp/tmp1pfshhjt/research
+wrote architecture research: /tmp/tmplkf8lma7/research
+exit=0
+
+$ [candidate] ruff check tools src/robotics_sim tests/unit/test_design_contracts.py tests/unit/test_sim_core.py
+All checks passed!
+exit=0
+
+$ [candidate] yamllint --config-file .yamllint.yaml .
+(no output)
+exit=0
+
+$ [candidate] pymarkdown --config .pymarkdown.json scan .
+(no output)
+exit=0
+
+$ [candidate] shellcheck scripts/run-checks.sh
+(no output)
+exit=0
+
+$ [candidate] git diff --check
+(no output)
+exit=0
+
+Environment availability:
+$ command -v ros2
+(not found)
+exit=1
+$ command -v colcon
+(not found)
+exit=1
+$ command -v docker
+(not found)
+exit=1
+$ command -v podman
+(not found)
+exit=1
+$ test -d /opt/ros
+absent
+
+
+Additional baseline and schema evidence:
+$ baseline malformed-package reproduction: python3 -c import json
+from pathlib import Path
+from tools.design_contracts import validate_design_package
+r=Path('examples/warehouse-tote')
+b=json.loads((r/'design-brief.json').read_text())
+p=json.loads((r/'design-package.json').read_text())
+p['interfaces']=[{}];p['algorithm_plan']=[{}];p['hardware_functional_plan']=[{}];p['verification_plan']={}
+print(validate_design_package(p,b))
+
+[]
+exit=0
+
+$ candidate Draft 2020-12 schema check: python -c import json
+from pathlib import Path
+from jsonschema import Draft202012Validator
+s=json.loads(Path('contracts/design-package.schema.json').read_text())
+Draft202012Validator.check_schema(s)
+for p in sorted(Path('examples').glob('*/design-package.json')):
+ e=list(Draft202012Validator(s).iter_errors(json.loads(p.read_text())))
+ print(p, 'PASS' if not e else 'FAIL')
+
+examples/indoor-inspection/design-package.json PASS
+examples/narrow-delivery/design-package.json PASS
+examples/warehouse-tote/design-package.json PASS
+exit=0
+
+$ PR metadata: gh pr view
+{"baseRefName":"main","headRefOid":"1b23621273141a4f3499ebbc25be5491d6bae5b5","mergeStateStatus":"CLEAN","state":"OPEN","statusCheckRollup":[{"__typename":"CheckRun","completedAt":"2026-10-08T03:21:55Z","conclusion":"SUCCESS","detailsUrl":"https://github.com/mming52520-coder/robotics-project-template/actions/runs/37722347978/job/113132666936","name":"validate-template","startedAt":"2026-10-08T03:21:45Z","status":"COMPLETED","workflowName":"CI"},{"__typename":"CheckRun","completedAt":"2026-10-08T03:22:14Z","conclusion":"SUCCESS","detailsUrl":"https://github.com/mming52520-coder/robotics-project-template/actions/runs/37722347978/job/113132667056","name":"ros2-simulation","startedAt":"2026-10-08T03:21:45Z","status":"COMPLETED","workflowName":"CI"}],"url":"https://github.com/mming52520-coder/robotics-project-template/pull/18"}
+exit=0
+
+$ CI run metadata: gh run view
+{"conclusion":"success","headSha":"1b23621273141a4f3499ebbc25be5491d6bae5b5","jobs":[{"completedAt":"2026-10-08T03:21:55Z","conclusion":"success","databaseId":113132666936,"name":"validate-template","startedAt":"2026-10-08T03:21:45Z","status":"completed","steps":[{"conclusion":"success","name":"Set up job","number":1,"status":"completed"},{"conclusion":"success","name":"Check out repository","number":2,"status":"completed"},{"conclusion":"success","name":"Set up Python","number":3,"status":"completed"},{"conclusion":"success","name":"Install validation tools","number":4,"status":"completed"},{"conclusion":"success","name":"Validate structure and safety defaults","number":5,"status":"completed"},{"conclusion":"success","name":"Validate design contracts and Skills","number":6,"status":"completed"},{"conclusion":"success","name":"Check Python","number":7,"status":"completed"},{"conclusion":"success","name":"Check YAML","number":8,"status":"completed"},{"conclusion":"success","name":"Check Markdown","number":9,"status":"completed"},{"conclusion":"success","name":"Check shell","number":10,"status":"completed"},{"conclusion":"success","name":"Post Set up Python","number":19,"status":"completed"},{"conclusion":"success","name":"Post Check out repository","number":20,"status":"completed"},{"conclusion":"success","name":"Complete job","number":21,"status":"completed"}],"url":"https://github.com/mming52520-coder/robotics-project-template/actions/runs/37722347978/job/113132666936"},{"completedAt":"2026-10-08T03:22:14Z","conclusion":"success","databaseId":113132667056,"name":"ros2-simulation","startedAt":"2026-10-08T03:21:45Z","status":"completed","steps":[{"conclusion":"success","name":"Set up job","number":1,"status":"completed"},{"conclusion":"success","name":"Initialize containers","number":2,"status":"completed"},{"conclusion":"success","name":"Check out repository","number":3,"status":"completed"},{"conclusion":"success","name":"Build and test ROS 2 simulation","number":4,"status":"completed"},{"conclusion":"success","name":"Preserve ROS 2 test evidence","number":5,"status":"completed"},{"conclusion":"success","name":"Post Check out repository","number":9,"status":"completed"},{"conclusion":"success","name":"Stop containers","number":10,"status":"completed"},{"conclusion":"success","name":"Complete job","number":11,"status":"completed"}],"url":"https://github.com/mming52520-coder/robotics-project-template/actions/runs/37722347978/job/113132667056"}],"status":"completed"}
+exit=0
+
+
+Local Jazzy acceptance continuation (UTC 2026-10-08T05:03:21Z):
+$ dpkg-query -W ros-jazzy-desktop ros-dev-tools
+ros-dev-tools 1.0.3 install ok installed
+ros-jazzy-desktop 0.11.0-1noble.20261006.040109 install ok installed
+$ source /opt/ros/jazzy/setup.bash && ros2 --help
+ROS 2 CLI ready; exit=0
+
+All ROS commands below ran from the independent candidate worktree after sourcing
+/opt/ros/jazzy/setup.bash and install/setup.bash where applicable, with
+ROS_DOMAIN_ID=187 and ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST.
+
+$ colcon build --packages-select robotics_sim
+Starting >>> robotics_sim
+Finished <<< robotics_sim [1.35s]
+Summary: 1 package finished [1.53s]
+exit=0
+
+$ python3 -m pytest -q src/robotics_sim/test/test_*.py --junitxml=build/robotics_sim/test_results/robotics_sim/pytest.xml
+.... [100%]
+4 passed in 9.04s
+exit=0
+$ python3 tools/validate_design_package.py examples/warehouse-tote/design-brief.json examples/warehouse-tote/design-package.json --evidence build/robotics_sim/test_results/robotics_sim/pytest.xml
+design contract validation passed
+exit=0
+$ colcon test-result --verbose
+Summary: 4 tests, 0 errors, 0 failures, 0 skipped
+exit=0
+
+After adding ROS obstacle-fault and fake-base timeout observations to existing tests:
+$ python3 -m pytest -q src/robotics_sim/test/test_sim_graph.py::SimGraphTest::test_faults_stop_and_require_fresh_motion src/robotics_sim/test/test_installed_launch.py::InstalledLaunchTest::test_gate_process_restart_requires_reset
+.. [100%]
+2 passed in 7.44s
+exit=0
+$ python3 -m pytest -q src/robotics_sim/test/test_*.py --junitxml=build/robotics_sim/test_results/robotics_sim/pytest.xml
+.... [100%]
+4 passed in 10.12s
+exit=0
+$ python3 tools/validate_design_package.py examples/warehouse-tote/design-brief.json examples/warehouse-tote/design-package.json --evidence build/robotics_sim/test_results/robotics_sim/pytest.xml
+design contract validation passed
+exit=0
+$ colcon test-result --verbose
+Summary: 4 tests, 0 errors, 0 failures, 0 skipped
+exit=0
+$ sha256sum build/robotics_sim/test_results/robotics_sim/pytest.xml
+bd35e323c3cb39fbb6a0f1a3b0055d644d02ca13eaef9adf66e2761f37cbc744  build/robotics_sim/test_results/robotics_sim/pytest.xml
+
+$ PATH="$PWD/.venv/bin:$PATH" bash scripts/run-checks.sh
+validated 21 required paths and public-release safety defaults
+skill validation passed
+evaluation validation passed
+public content scan passed
+Ran 40 tests in 1.157s; OK
+exit=0
+$ PATH="$PWD/.venv/bin:$PATH" python -m ruff check tools src/robotics_sim tests/unit/test_design_contracts.py tests/unit/test_sim_core.py
+All checks passed!
+exit=0
+$ PATH="$PWD/.venv/bin:$PATH" yamllint --config-file .yamllint.yaml .
+(no output); exit=0
+$ PATH="$PWD/.venv/bin:$PATH" pymarkdown --config .pymarkdown.json scan .
+(no output); exit=0
+$ PATH="$PWD/.venv/bin:$PATH" shellcheck scripts/*.sh
+(no output); exit=0
+$ git diff --check
+(no output); exit=0
+
+Candidate GitHub CI: NOT RUN. Candidate was uncommitted and unpushed when tests ran; original
+PR #18 CI is not evidence for these changes. No physical hardware or actuator output was used.
+
+Final read-only state check:
+$ git status --short --branch [original checkout]
+## main...origin/main
+$ git rev-parse HEAD origin/main origin/pr-18 [original checkout]
+94bd7933274bf00ece36e57bb8d78cfd4cd60594
+94bd7933274bf00ece36e57bb8d78cfd4cd60594
+1b23621273141a4f3499ebbc25be5491d6bae5b5
+$ gh pr view 18 --repo mming52520-coder/robotics-project-template --json state,headRefOid,mergeStateStatus,statusCheckRollup
+OPEN; head=1b23621273141a4f3499ebbc25be5491d6bae5b5; mergeStateStatus=CLEAN;
+validate-template and ros2-simulation SUCCESS only on unchanged head.
+
+Targeted GitHub reconnaissance before the final ROS test extension:
+- ROS 2 upstream `ros2/examples` publisher/subscriber and timer usage;
+  https://github.com/ros2/examples/tree/rolling/rclpy/topics
+- ROS 2 upstream `ros2/rclpy` executor implementation;
+  https://github.com/ros2/rclpy/blob/rolling/rclpy/rclpy/executors.py
+- `gh api repos/ros2/examples/license` and `gh api repos/ros2/rclpy/license`:
+  both report Apache-2.0. No upstream source was copied and no dependency was added.

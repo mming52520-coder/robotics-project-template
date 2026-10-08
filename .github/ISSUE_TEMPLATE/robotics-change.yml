@@ -1,0 +1,40 @@
+name: Bounded robotics change
+description: Plan a simulation-only change against an existing DesignPackage.
+title: "[Change] "
+labels: []
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective and observable acceptance
+      description: State the behavior to change and how to observe success.
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Design basis and requirement IDs
+      description: Link the DesignBrief or DesignPackage and name the affected requirement IDs.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: In scope, out of scope, and invariants
+      description: Name allowed paths and safety behavior that must remain intact.
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Required tests and evidence
+      description: Name test IDs, ROS simulation checks, and evidence expected for review.
+    validations:
+      required: true
+  - type: textarea
+    id: blockers
+    attributes:
+      label: Open decisions and stop conditions
+      description: Mark unknown thresholds, permissions, and behavior that blocks implementation.
+    validations:
+      required: true

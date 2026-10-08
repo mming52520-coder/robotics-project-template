@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-from tools.public_content import scan_public_content
+from tools.public_content import is_ignored_private_file, scan_public_content
 from tools.validate_skills import validate_skill_tree
-
+from tools.validate_template import private_configuration_errors
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -57,6 +58,30 @@ class SkillAndContentValidationTests(unittest.TestCase):
 
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0].kind, "hardware-identifying-field")
+
+    def test_private_selection_is_scanned_if_force_tracked(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            (root / ".gitignore").write_text("config/private/*\n", encoding="utf-8")
+            private = root / "config" / "private" / "selection.json"
+            private.parent.mkdir(parents=True)
+            private.write_text('{"' + 'model' + '": "candidate"}\n', encoding="utf-8")
+            self.assertTrue(is_ignored_private_file(root, private))
+            self.assertEqual(scan_public_content(root), [])
+            self.assertEqual(private_configuration_errors(root), [])
+
+            subprocess.run(
+                ["git", "-C", str(root), "add", "-f", "--", "config/private/selection.json"],
+                check=True,
+            )
+            self.assertFalse(is_ignored_private_file(root, private))
+            findings = scan_public_content(root)
+            self.assertTrue(any(item.kind == "hardware-identifying-field" for item in findings))
+            self.assertEqual(
+                private_configuration_errors(root),
+                ["private configuration tracked or not ignored: config/private/selection.json"],
+            )
 
 
 if __name__ == "__main__":
