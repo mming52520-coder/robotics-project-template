@@ -54,10 +54,13 @@ class ChangeContractTests(unittest.TestCase):
         changed = copy.deepcopy(self.document)
         changed["base_revision"] = "0" * 40
         changed["allowed_paths"] = ["nothing/*"]
-        self.assertIn(
-            "base_revision must match the trusted candidate merge-base",
-            self.validate_fixture(changed),
-        )
+        with patch.dict(os.environ, {
+            "GITHUB_EVENT_NAME": "pull_request", "GITHUB_REF": "refs/pull/1/merge",
+        }):
+            self.assertIn(
+                "base_revision must match the trusted candidate merge-base",
+                self.validate_fixture(changed),
+            )
 
     def test_main_push_accepts_older_pr_base_without_shortening_scope(self) -> None:
         head = subprocess.run(

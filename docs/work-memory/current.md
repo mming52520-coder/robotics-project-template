@@ -96,6 +96,11 @@ the isolated test clone and is not part of this candidate.
   corrected both. Run `37749992397` passed both jobs; uploaded manifests
   share PR merge-test SHA `6e0f22a` and snapshot digest `830a7ce2`, and its
   JUnit artifact has four cases with zero failures, errors, or skips.
+- PR #19 merged as `837da9e`. The first `main` push run `37752465109`
+  exposed a test-only assumption: the forged-base unit test expected the PR
+  error wording even on the main push path. The follow-up change isolates that
+  regression in a PR event context while keeping a separate push event test.
+  No ChangeContract production logic or safety runtime changed in the fix.
 
 ## Decisions
 
