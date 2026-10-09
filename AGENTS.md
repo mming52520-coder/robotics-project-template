@@ -41,9 +41,15 @@ plan, DesignPackage, ChangeContract, or test proposal unless a concrete blocker 
    gate and the relevant offline and Jazzy checks. Preserve physical-output and stop gates.
 4. Read `.agents/skills/robotics-evidence-review/SKILL.md`; review the entire candidate
    diff and test assertions in a read-only pass against the contract and trusted base.
-   Record concrete findings and whether this was a self-review, separate reviewer, or
-   OCR. Return confirmed findings to implementation, fix them
-   within scope, and rerun affected checks; validate the final evidence snapshot.
+   Run `python3 tools/review_coverage.py create` after the final source edit and checks;
+   fill the generated ignored JSON record with every reviewed path, evidence run, and
+   concrete finding. Run `python3 tools/review_coverage.py validate <record.json>`.
+   State whether this was a self-review, separate reviewer, or OCR. Return confirmed
+   findings to implementation, fix them within scope, and rerun affected checks;
+   regenerate the record for the final snapshot. A filled record is a coverage claim,
+   not proof of reviewer identity, review quality, or human approval.
+   If staged bytes differ from the tested worktree, resolve that mismatch before
+   claiming passing evidence; the check runner blocks this state.
 5. Deliver the changed code, test evidence, review findings and dispositions, remaining
    risks, and the exact branch or revision. Human merge and hardware decisions remain
    separate. Do not claim an independent review when only self-review ran.

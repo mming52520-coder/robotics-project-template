@@ -6,6 +6,18 @@ Provide a public, model-free AI design workflow and a simulation-only ROS 2 engi
 
 ## Current Status
 
+As of 2026-10-08, PR #19 was merged into `main` at `837da9e`; PR #18 is also
+marked merged. The main-push CI run `37752465109` failed in a PR-specific unit
+assertion. Its isolated fix is open in PR #20 at `fa748e4`, with both PR jobs
+passing; the owner has not reviewed it and explicitly requested no merge yet.
+The local `codex/all-in-code-review-gate` branch starts from `837da9e` and adds
+a deterministic review inventory and record check for an Agent's uncommitted
+candidate. It does not include PR #20 or change ROS control behavior. The
+independent Agent's read-only review found missing index-only paths, unbound
+base/head evidence claims, and staged deletion left in the worktree; all three
+were repaired in this local branch.
+The older candidate notes below describe the development history, not current PR state.
+
 Verified: v0.2 provides versioned design contracts, five focused design Skills, an optional public
 architecture-research Skill, synthetic examples, deterministic evaluation cases, and public-content
 safety checks. The current work adds a ROS 2 Jazzy simulation slice for the validated synthetic
@@ -103,23 +115,21 @@ preserving the model-free public DesignPackage and physical-output gate.
 ## Blockers
 
 Real robot requirements, localization, navigation, sensor integration, calibration, electrical design approval, and physical trial authorization remain project-specific and must stay outside this public template until independently specified and verified.
-The candidate requires fresh GitHub CI with uploaded JUnit evidence on its
-final proposed commit before merge.
-The AI delivery candidate also needs trusted-base inspection of its validators, Schemas,
-CI, review rule, and tests. OCR CLI and Agent behavior evaluation were not run locally;
-GitHub ruleset and repository-template settings were not changed.
-The requirement-to-code branch is still local; other users cloning remote `main` will
-not receive this workflow until it is reviewed and merged.
+PR #20 remains unmerged pending the owner's independent review; `main` CI stays
+red for that known test assertion. This new local branch also requires independent
+human review of its validator and test changes, plus future remote CI on its final
+candidate head before merge. OCR CLI is not installed here, so no OCR model review
+is claimed. GitHub ruleset and repository-template settings were not changed.
 No project-specific hardware requirements, selected device, received protocol,
 calibration, electrical approval, or physical-trial authorization exists in this
 template. An independent human reviewer and final-head remote CI remain
 merge gates for this candidate.
-The first independent Agent coding probe was blocked on the now-fixed historical
-contract-test fixture; a fresh local rerun passed. Its self-review does not
-replace the required independent human review or final-head remote CI.
 
 ## Next Actions
 
+0. Finish the local review-record validator regression, offline and Jazzy gates,
+   then retain snapshot-bound evidence and independent Agent findings. Do not
+   merge PR #20 or this branch without a separate owner decision.
 1. Copy a synthetic DesignBrief and replace it with verified local facts. Verify: brief validation passes.
 2. When selecting a new architecture, run public reference research and review sources and licenses.
    Verify: a local recommendation names evidence, open decisions, and a verification step.

@@ -66,6 +66,11 @@ Run `bash scripts/run-checks.sh` for the repository checks and, on a host with R
 and test-result inspection. Both scripts write raw logs and a bound manifest under the
 ignored `artifacts/<run-id>/` directory. CI uses the same scripts and uploads their
 available results, including JUnit. See [contracts](contracts/README.md) for evidence limits.
+For a local Agent review, run `python3 tools/review_coverage.py create`, inspect every
+listed changed file, fill the generated record with the current offline and ROS evidence
+directories, and run `python3 tools/review_coverage.py validate <record.json>`. This also
+works before committing. It verifies coverage claims and evidence freshness; human review
+of core-chain changes remains a separate merge gate.
 
 ## Structure
 

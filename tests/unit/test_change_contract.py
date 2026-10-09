@@ -95,11 +95,13 @@ class ChangeContractTests(unittest.TestCase):
         with patch("tools.change_contracts._git", side_effect=[
             "contracts/change-contract.schema.json",
             "src/robotics_sim/core.py",
+            "tests/unit/staged_only.py",
             "scratch/extra.py",
         ]):
             self.assertEqual(changed_paths("a" * 40, ROOT), {
                 "contracts/change-contract.schema.json",
                 "src/robotics_sim/core.py",
+                "tests/unit/staged_only.py",
                 "scratch/extra.py",
             })
 

@@ -37,10 +37,16 @@ def _inside(root: Path, name: str) -> Path | None:
 def changed_paths(base: str, root: Path = ROOT) -> set[str]:
     """Include committed, staged, unstaged, and untracked candidate inputs."""
     head = os.environ.get("PR_HEAD_SHA") or "HEAD"
-    tracked = _git("diff", "--name-only", base, head, "--", root=root).splitlines()
-    dirty_tracked = _git("diff", "--name-only", "HEAD", "--", root=root).splitlines()
+    # Report both sides of a rename so scope and review cannot lose the old path.
+    tracked = _git("diff", "--name-only", "--no-renames", base, head, "--", root=root).splitlines()
+    dirty_tracked = _git(
+        "diff", "--name-only", "--no-renames", "HEAD", "--", root=root
+    ).splitlines()
+    staged = _git(
+        "diff", "--cached", "--name-only", "--no-renames", "HEAD", "--", root=root
+    ).splitlines()
     untracked = _git("ls-files", "--others", "--exclude-standard", root=root).splitlines()
-    return set(tracked + dirty_tracked + untracked)
+    return set(tracked + dirty_tracked + staged + untracked)
 
 
 def trusted_candidate_base(root: Path = ROOT) -> str:
