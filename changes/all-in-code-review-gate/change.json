@@ -2,7 +2,7 @@
   "change_id": "all-in-code-review-gate",
   "design_package_ref": "examples/warehouse-tote/design-package.json",
   "design_package_sha256": "062ef44e92613fe7855b262a5a22c7a85ae1f96e62b251cb63cebf950162e4a0",
-  "base_revision": "837da9e4e4f06f6dd1494addd8743779637808d4",
+  "base_revision": "99254534695541d18df5dcf04e02ab63fe8089ed",
   "objective": "Make local AI code review coverage and evidence claims machine-checkable for dirty candidate worktrees without changing robot behavior.",
   "in_scope": [
     "Generate a trusted-base review inventory for committed and uncommitted changes",
