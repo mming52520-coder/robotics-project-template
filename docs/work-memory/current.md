@@ -6,17 +6,24 @@ Provide a public, model-free AI design workflow and a simulation-only ROS 2 engi
 
 ## Current Status
 
-As of 2026-10-08, PR #19 was merged into `main` at `837da9e`; PR #18 is also
-marked merged. The main-push CI run `37752465109` failed in a PR-specific unit
-assertion. Its isolated fix is open in PR #20 at `fa748e4`, with both PR jobs
-passing; the owner has not reviewed it and explicitly requested no merge yet.
-The local `codex/all-in-code-review-gate` branch starts from `837da9e` and adds
-a deterministic review inventory and record check for an Agent's uncommitted
-candidate. It does not include PR #20 or change ROS control behavior. The
-independent Agent's read-only review found missing index-only paths, unbound
-base/head evidence claims, and staged deletion left in the worktree; all three
-were repaired in this local branch.
-The older candidate notes below describe the development history, not current PR state.
+As of 2026-10-22, PR #20 and PR #21 have merged in order; `main` is `ba2227d`.
+Their respective main-push CI runs `37891315932` and `37891848906` passed both
+offline and Jazzy jobs. The current
+`codex/all-in-code-governance-main` candidate starts from that main commit;
+the original `codex/all-in-code-governance` worktree at `46994ca` is preserved.
+It separates clean baseline validation from bounded change acceptance, binds
+actual unittest outcomes and selected-design trace, adds workflow requirement
+IDs, and joins contract, review, and same-run evidence in one final PR gate.
+No robot control source or physical output was changed. A ROS graph test now
+waits for the observed stale-status latch to avoid an incorrect fixed-time
+assumption. `docs/acceptance/all-in-code-governance.md` contains the R1–R5
+disposition, local execution logs, and the remaining remote governance gate.
+The owner authorized committing and pushing this branch on 2026-10-22. The
+current Git branch and PR identify its delivery state. Independent human review,
+merge, and server rule changes remain separate; no settings write occurred.
+
+The older candidate notes below describe development history, not the current
+PR state or approval status.
 
 Verified: v0.2 provides versioned design contracts, five focused design Skills, an optional public
 architecture-research Skill, synthetic examples, deterministic evaluation cases, and public-content
@@ -47,6 +54,36 @@ the isolated test clone and is not part of this candidate.
 
 ## Evidence
 
+- All in Code governance candidate: 80 local offline tests and four Jazzy ROS
+  tests passed on its uncommitted source snapshot. A synthetic PR merge passed
+  the final gate after same-run artifact transfer into a separate checkout;
+  missing review paths and wrong run identity were rejected. A synthetic
+  PR #20 → PR #21 → governance main push passed offline and Jazzy baseline
+  checks in an isolated ROS domain. The final new-session Agent probe on
+  synthetic source SHA `a4d0669` implemented a read-only simulated timeout
+  diagnostic only in its own clone, with 81 offline and five ROS tests plus
+  self-review and local final acceptance passing. The hardware-boundary probe
+  refused a physical trial. See `docs/acceptance/all-in-code-governance.md`;
+  none of these results is remote CI, human approval, or physical validation.
+- Postmerge integration at `ba2227d`: the contract gate, 80 unit tests, the
+  full offline entry and four Jazzy ROS tests passed in the new worktree.
+  Initial manifests are `artifacts/offline-ba2227d-initial/manifest.json` and
+  `artifacts/ros-ba2227d-initial/manifest.json`. These runs precede the updated
+  documentation; the final snapshot is rechecked under the `-sealed` run IDs
+  named in the acceptance report. The separate re-audit of
+  `main` confirms the governance gaps still exist there and does not review
+  this governance candidate.
+- An isolated clone with the current candidate applied to `ba2227d` used a
+  synthetic commit `9e6e9f9`: clean baseline checks passed 80 offline and
+  four Jazzy cases. With its own HEAD as `BASE_SHA`, change acceptance rejected
+  zero changed contracts before running checks. This is local simulation,
+  not a target-repository commit or remote CI result.
+- On 2026-10-22, the refreshed governance candidate passed the local final
+  ChangeContract gate, 80 unit tests in the complete offline entry, and four
+  Jazzy ROS tests with zero failures/skips. Raw prepush evidence is in
+  `artifacts/offline-governance-20261022-prepush/` and
+  `artifacts/ros-governance-20261022-prepush/`. Current committed-head PR CI
+  and independent human review are still required before merge.
 - `contracts/` defines the v1 DesignBrief and proposed v2 DesignPackage boundary.
 - `.agents/skills/` contains the ordered design workflow.
 - `open-source-architecture-research` inspects public project facts, ranks public candidates, and
@@ -115,11 +152,12 @@ preserving the model-free public DesignPackage and physical-output gate.
 ## Blockers
 
 Real robot requirements, localization, navigation, sensor integration, calibration, electrical design approval, and physical trial authorization remain project-specific and must stay outside this public template until independently specified and verified.
-PR #20 remains unmerged pending the owner's independent review; `main` CI stays
-red for that known test assertion. This new local branch also requires independent
-human review of its validator and test changes, plus future remote CI on its final
-candidate head before merge. OCR CLI is not installed here, so no OCR model review
-is claimed. GitHub ruleset and repository-template settings were not changed.
+PR #20 and PR #21 are merged and main-push CI is green. The actual `main` has
+not received this governance candidate. It requires independent human
+review of its validator, workflow, and test assertions plus fresh remote CI
+before merge. OCR CLI was not used. GitHub ruleset and repository-template
+settings were not changed; the active ruleset still lacks required PR/check
+gates. Local and Agent reviews cannot prove human approval.
 No project-specific hardware requirements, selected device, received protocol,
 calibration, electrical approval, or physical-trial authorization exists in this
 template. An independent human reviewer and final-head remote CI remain
@@ -127,9 +165,9 @@ merge gates for this candidate.
 
 ## Next Actions
 
-0. Finish the local review-record validator regression, offline and Jazzy gates,
-   then retain snapshot-bound evidence and independent Agent findings. Do not
-   merge PR #20 or this branch without a separate owner decision.
+0. Inspect the governance diff and final snapshot-bound offline/Jazzy evidence;
+   after the authorized branch push, inspect remote PR CI and its artifacts.
+   Do not merge or change settings without the owner's separate decision.
 1. Copy a synthetic DesignBrief and replace it with verified local facts. Verify: brief validation passes.
 2. When selecting a new architecture, run public reference research and review sources and licenses.
    Verify: a local recommendation names evidence, open decisions, and a verification step.
@@ -147,7 +185,9 @@ merge gates for this candidate.
 
 ## Verification
 
-Run `bash scripts/run-checks.sh` and, on a Jazzy host, `bash scripts/run-ros-checks.sh`.
+Run `bash scripts/run-checks.sh --purpose baseline` on a clean checkout or
+`--purpose change` on a bounded candidate. Use the same purpose with
+`bash scripts/run-ros-checks.sh` on a Jazzy host.
 These scripts create snapshot-bound manifests and raw logs. Validate each manifest with
 `python3 tools/evidence.py validate artifacts/<run-id>`. Do not claim a physical safety
 result from a template or simulation check.

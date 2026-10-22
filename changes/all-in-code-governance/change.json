@@ -1,0 +1,82 @@
+{
+  "change_id": "all-in-code-governance",
+  "design_package_ref": "examples/warehouse-tote/design-package.json",
+  "design_package_sha256": "062ef44e92613fe7855b262a5a22c7a85ae1f96e62b251cb63cebf950162e4a0",
+  "base_revision": "ba2227d91da5dbb0dae6031851f9a7ad34fa4598",
+  "objective": "Close reviewed All in Code governance gaps without changing robot control behavior.",
+  "in_scope": [
+    "Separate clean baseline checks from bounded candidate acceptance.",
+    "Bind actual unit outcomes and workflow test IDs to execution evidence.",
+    "Select the candidate design and its unit evidence from the ChangeContract.",
+    "Require complete review and evidence in one final repository-side gate.",
+    "Document the separately authorized GitHub rule rollout and current limitations."
+  ],
+  "out_of_scope": [
+    "Merge, release, or GitHub settings writes without separate authorization.",
+    "Physical output, real hardware, and vehicle testing.",
+    "New navigation, localization, drivers, or multi-Agent orchestration."
+  ],
+  "allowed_paths": [
+    ".github/workflows/ci.yml",
+    "AGENTS.md",
+    "README.md",
+    "changes/all-in-code-governance/change.json",
+    "contracts/README.md",
+    "contracts/workflow-requirements.json",
+    "docs/acceptance/all-in-code-governance.md",
+    "docs/reference/agent-development-workflow.md",
+    "docs/reference/github-delivery-gates.md",
+    "docs/work-memory/current.md",
+    "scripts/run-checks.sh",
+    "scripts/run-ros-checks.sh",
+    "src/robotics_sim/test/test_sim_graph.py",
+    "tests/unit/test_change_contract.py",
+    "tests/unit/test_evidence.py",
+    "tests/unit/test_review_coverage.py",
+    "tests/unit/test_run_unit_tests.py",
+    "tests/unit/test_final_acceptance.py",
+    "tools/change_contracts.py",
+    "tools/evidence.py",
+    "tools/review_coverage.py",
+    "tools/run_unit_tests.py",
+    "tools/workflow_contracts.py",
+    "tools/final_acceptance.py"
+  ],
+  "affected_requirement_ids": [
+    "REQ-WF-BASELINE",
+    "REQ-WF-SCOPE",
+    "REQ-WF-UNIT",
+    "REQ-WF-REVIEW",
+    "REQ-WF-SELECTION",
+    "REQ-WF-DELIVERY",
+    "REQ-SIM-STOP"
+  ],
+  "invariants": [
+    "The existing SafetyGate and physical-output boundary remain unchanged.",
+    "A baseline result cannot satisfy candidate acceptance.",
+    "A skipped, missing, failed, stale, or wrong-project required test cannot pass.",
+    "A candidate-authored JSON value cannot grant human approval."
+  ],
+  "required_test_ids": [
+    "T-WF-BASELINE",
+    "T-WF-SCOPE",
+    "T-WF-FORGED-BASE",
+    "T-WF-UNIT-RESULT",
+    "T-WF-UNIT-RUNNER",
+    "T-WF-UNIT-ZERO",
+    "T-WF-UNIT-MANIFEST",
+    "T-WF-REVIEW-PATHS",
+    "T-WF-REVIEW-FINDINGS",
+    "T-WF-REVIEW-EVIDENCE",
+    "T-WF-SELECTION",
+    "T-WF-ROS-SELECTION",
+    "T-WF-DELIVERY-MERGE",
+    "T-WF-DELIVERY-REVIEW",
+    "T-SIM-GRAPH"
+  ],
+  "stop_conditions": [
+    "The candidate scope, test policy, design selection, or evidence relationship cannot be verified.",
+    "Any change would weaken stop behavior or enable physical actuation.",
+    "The required offline or Jazzy regression cannot run; report BLOCKED rather than PASS."
+  ]
+}

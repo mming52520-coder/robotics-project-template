@@ -57,7 +57,11 @@ def run_graph_scenario() -> None:
         assert odom[-1].pose.pose.position.x > 0.0
 
         environment.status_timer.cancel()
-        pump(0.35)
+        deadline = time.monotonic() + 0.65
+        while not gate.gate.estop_latched and time.monotonic() < deadline:
+            executor.spin_once(timeout_sec=0.02)
+        assert gate.gate.estop_latched
+        pump(0.1)
         assert safe[-1].linear.x == 0.0
         environment.status_timer.reset()
         pump(0.15)

@@ -15,8 +15,10 @@ from jsonschema import Draft202012Validator
 
 try:
     from .design_contracts import validate_design_package
+    from .workflow_contracts import load_catalog
 except ImportError:
     from design_contracts import validate_design_package
+    from workflow_contracts import load_catalog
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -60,9 +62,7 @@ def current_change_contract(root: Path = ROOT) -> Path:
     """Find the one contract changed by this candidate, not a prior merged contract."""
     base = trusted_candidate_base(root)
     paths = changed_paths(base, root)
-    candidates = sorted(
-        path for path in paths if re.fullmatch(r"changes/[^/]+/change\.json", path)
-    )
+    candidates = sorted(path for path in paths if re.fullmatch(r"changes/[^/]+/change\.json", path))
     if len(candidates) != 1:
         raise ValueError(f"expected one changed ChangeContract, found {len(candidates)}")
     return root / candidates[0]
@@ -79,8 +79,8 @@ def validate_change_contract(
     violations = list(Draft202012Validator(schema).iter_errors(document))
     if violations:
         return sorted(
-            f"{'/'.join(str(part) for part in error.absolute_path) or '<root>'}: "
-            f"{error.message}" for error in violations
+            f"{'/'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
+            for error in violations
         )
     assert isinstance(document, dict)
     errors: list[str] = []
@@ -100,6 +100,19 @@ def validate_change_contract(
         return errors
     requirements = {item["id"]: item for item in package["requirements"]}
     checks = {item["id"]: item for item in package["verification_plan"]["checks"]}
+    try:
+        workflow_requirements, workflow_checks = load_catalog(root)
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        return [f"invalid workflow requirement catalog: {error}"]
+    if requirements.keys() & workflow_requirements.keys() or checks.keys() & workflow_checks.keys():
+        return ["workflow and robot requirement or test IDs overlap"]
+    requirements.update({key: {"status": "implemented"} for key in workflow_requirements})
+    checks.update(
+        {
+            key: {"status": "implemented", "requirement_ids": value["requirement_ids"]}
+            for key, value in workflow_checks.items()
+        }
+    )
     affected = set(document["affected_requirement_ids"])
     required = set(document["required_test_ids"])
     for req_id in affected - requirements.keys():
@@ -108,11 +121,16 @@ def validate_change_contract(
         errors.append(f"unknown required test: {test_id}")
     for req_id in affected & requirements.keys():
         linked = {
-            test_id for test_id in required & checks.keys()
+            test_id
+            for test_id in required & checks.keys()
             if req_id in checks[test_id]["requirement_ids"]
         }
         if not linked:
             errors.append(f"affected requirement {req_id} needs a required test link")
+        if req_id in workflow_requirements and not set(
+            workflow_requirements[req_id]["test_ids"]
+        ).issubset(required):
+            errors.append(f"workflow requirement {req_id} needs all catalog tests")
         if phase == "final" and requirements[req_id]["status"] != "implemented":
             errors.append(f"affected requirement {req_id} is not implemented")
         if requirements[req_id]["status"] == "implemented" and not any(
@@ -127,7 +145,8 @@ def validate_change_contract(
     patterns = document["allowed_paths"]
     for pattern in patterns:
         if (
-            pattern in {"*", "**", "**/*"} or Path(pattern).is_absolute()
+            pattern in {"*", "**", "**/*"}
+            or Path(pattern).is_absolute()
             or ".." in Path(pattern).parts
         ):
             errors.append(f"unsafe allowed_paths pattern: {pattern}")
@@ -141,10 +160,15 @@ def validate_change_contract(
     if main_push:
         # A PR may have forked before the previous main tip. The scope below
         # still uses the trusted push event base, never the declared base.
-        if subprocess.run(
-            ["git", "merge-base", "--is-ancestor", document["base_revision"], base],
-            cwd=root, capture_output=True, check=False,
-        ).returncode != 0:
+        if (
+            subprocess.run(
+                ["git", "merge-base", "--is-ancestor", document["base_revision"], base],
+                cwd=root,
+                capture_output=True,
+                check=False,
+            ).returncode
+            != 0
+        ):
             return ["base_revision must precede the trusted main push base"]
     elif document["base_revision"] != base:
         return ["base_revision must match the trusted candidate merge-base"]

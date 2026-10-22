@@ -23,23 +23,35 @@ ROOT = Path(__file__).resolve().parents[1]
 REVIEW_MODES = {"self", "separate_agent", "ocr"}
 FINDING_STATES = {"OPEN", "PENDING", "FIXED", "FALSE_POSITIVE", "DUPLICATE", "OUT_OF_SCOPE"}
 CONTEXT_FIELDS = (
-    "base_sha", "head_sha", "snapshot_digest", "change_contract_path",
-    "change_contract_sha256", "changed_paths",
+    "base_sha",
+    "head_sha",
+    "snapshot_digest",
+    "change_contract_path",
+    "change_contract_sha256",
+    "changed_paths",
 )
-RECORD_FIELDS = {
-    "schema_version", *CONTEXT_FIELDS, "reviewer_mode", "reviewed_paths",
-    "skipped_paths", "findings", "evidence_runs",
+V2_CONTEXT_FIELDS = (*CONTEXT_FIELDS, "target_base_sha")
+V1_RECORD_FIELDS = {
+    "schema_version",
+    *CONTEXT_FIELDS,
+    "reviewer_mode",
+    "reviewed_paths",
+    "skipped_paths",
+    "findings",
+    "evidence_runs",
 }
+V2_RECORD_FIELDS = V1_RECORD_FIELDS - {"evidence_runs"} | {"target_base_sha"}
 
 
-def review_context() -> dict[str, object]:
+def review_context(version: str = "v1") -> dict[str, object]:
     """Reuse the trusted diff and evidence snapshot used by the existing gates."""
     base = trusted_candidate_base(ROOT)
     contract = current_change_contract(ROOT)
-    head = subprocess.run(
+    tested = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True, capture_output=True, text=True
     ).stdout.strip()
-    return {
+    head = os.environ.get("PR_HEAD_SHA") or tested
+    context: dict[str, object] = {
         "base_sha": base,
         "head_sha": head,
         "snapshot_digest": snapshot()["digest"],
@@ -47,18 +59,32 @@ def review_context() -> dict[str, object]:
         "change_contract_sha256": hashlib.sha256(contract.read_bytes()).hexdigest(),
         "changed_paths": sorted(changed_paths(base, ROOT)),
     }
+    if version == "v2":
+        target = os.environ.get("BASE_SHA") or "origin/main"
+        context["target_base_sha"] = subprocess.run(
+            ["git", "rev-parse", target],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    return context
 
 
-def new_record() -> dict[str, object]:
-    return {
-        "schema_version": "v1",
-        **review_context(),
+def new_record(version: str = "v1") -> dict[str, object]:
+    if version not in {"v1", "v2"}:
+        raise ValueError("review version must be v1 or v2")
+    record: dict[str, object] = {
+        "schema_version": version,
+        **review_context(version),
         "reviewer_mode": "self",
         "reviewed_paths": [],
         "skipped_paths": [],
         "findings": [],
-        "evidence_runs": {"offline": None, "ros": None},
     }
+    if version == "v1":
+        record["evidence_runs"] = {"offline": None, "ros": None}
+    return record
 
 
 def _text(value: object) -> bool:
@@ -75,9 +101,13 @@ def _evidence_errors(suite: str, value: object, context: dict[str, object]) -> l
         manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
         if not isinstance(manifest, dict) or manifest.get("suite") != suite:
             return [f"{suite} evidence has the wrong suite"]
-        errors = [f"{suite} evidence: {error}" for error in validate_manifest(directory)]
+        errors = [
+            f"{suite} evidence: {error}"
+            for error in validate_manifest(directory, expected_purpose="change")
+        ]
         for manifest_field, context_field in (
-            ("base_sha", "base_sha"), ("pr_head_sha", "head_sha"),
+            ("base_sha", "target_base_sha" if "target_base_sha" in context else "base_sha"),
+            ("pr_head_sha", "head_sha"),
             ("change_contract_path", "change_contract_path"),
             ("change_contract_sha256", "change_contract_sha256"),
         ):
@@ -88,17 +118,18 @@ def _evidence_errors(suite: str, value: object, context: dict[str, object]) -> l
         return [f"{suite} evidence is unreadable: {error}"]
 
 
-def validate_record(record: object) -> list[str]:
+def validate_record(record: object, evidence_runs: dict[str, str] | None = None) -> list[str]:
     """Fail closed on incomplete coverage, unresolved findings, or stale execution proof."""
     if not isinstance(record, dict):
         return ["review record must be an object"]
-    if record.get("schema_version") != "v1":
-        return ["review record schema_version must be v1"]
+    version = record.get("schema_version")
+    if version not in {"v1", "v2"}:
+        return ["review record schema_version must be v1 or v2"]
     errors: list[str] = []
-    if set(record) != RECORD_FIELDS:
+    if set(record) != (V1_RECORD_FIELDS if version == "v1" else V2_RECORD_FIELDS):
         errors.append("review record has missing or unknown fields")
-    current = review_context()
-    for field in CONTEXT_FIELDS:
+    current = review_context(version)
+    for field in CONTEXT_FIELDS if version == "v1" else V2_CONTEXT_FIELDS:
         if record.get(field) != current[field]:
             errors.append(f"review {field} differs from the current candidate")
     mode = record.get("reviewer_mode")
@@ -144,7 +175,9 @@ def validate_record(record: object) -> list[str]:
                 errors.append(f"{label}.resolution must explain the disposition")
             if state == "FIXED" and not _text(finding.get("verification")):
                 errors.append(f"{label}.verification must identify regression evidence")
-    runs = record.get("evidence_runs")
+    runs = record.get("evidence_runs") if version == "v1" else evidence_runs
+    if version == "v1" and evidence_runs is not None and runs != evidence_runs:
+        errors.append("injected evidence differs from the v1 review record")
     if not isinstance(runs, dict) or set(runs) != {"offline", "ros"}:
         errors.append("evidence_runs must name offline and ros")
     else:
@@ -156,22 +189,26 @@ def validate_record(record: object) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="action", required=True)
-    sub.add_parser("create", help="write an ignored record with the exact review inventory")
+    create = sub.add_parser("create", help="write an ignored review inventory")
+    create.add_argument("--version", choices=("v1", "v2"), default="v1")
     validate = sub.add_parser("validate", help="validate a filled review record")
     validate.add_argument("record", type=Path)
+    validate.add_argument("--offline")
+    validate.add_argument("--ros")
     args = parser.parse_args()
     if args.action == "create":
-        directory = ROOT / "artifacts" / (
-            f"review-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{os.getpid()}"
+        directory = (
+            ROOT / "artifacts" / (f"review-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{os.getpid()}")
         )
         directory.mkdir(parents=True, exist_ok=False)
         path = directory / "record.json"
-        path.write_text(json.dumps(new_record(), indent=2, ensure_ascii=False) + "\n")
+        path.write_text(json.dumps(new_record(args.version), indent=2, ensure_ascii=False) + "\n")
         print(path.relative_to(ROOT))
         return 0
     try:
         record = json.loads(args.record.read_text(encoding="utf-8"))
-        errors = validate_record(record)
+        runs = {"offline": args.offline, "ros": args.ros} if args.offline and args.ros else None
+        errors = validate_record(record, runs)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         errors = [f"review validation failed: {error}"]
     for error in errors:

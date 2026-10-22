@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   push:
     branches:
       - main
@@ -17,6 +18,7 @@ jobs:
       EVIDENCE_RUN_ID: offline-${{ github.run_id }}-${{ github.run_attempt }}
       BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
       PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      CHECK_PURPOSE: ${{ github.event_name == 'push' && 'baseline' || 'change' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -33,17 +35,19 @@ jobs:
         run: python -m pip install --requirement requirements-dev.txt
 
       - name: Run deterministic repository checks
-        run: bash scripts/run-checks.sh
+        run: bash scripts/run-checks.sh --purpose "$CHECK_PURPOSE"
 
       - name: Verify repository evidence
-        run: python3 tools/evidence.py validate "artifacts/${EVIDENCE_RUN_ID}"
+        run: python3 tools/evidence.py validate "artifacts/${EVIDENCE_RUN_ID}" --purpose "$CHECK_PURPOSE"
 
       - name: Preserve repository evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: repository-check-evidence
-          path: artifacts/
+          path: |
+            artifacts/
+            build/unit/test-results.json
           if-no-files-found: warn
 
   ros2-simulation:
@@ -55,6 +59,7 @@ jobs:
       BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
       PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       ROS_CONTAINER_IMAGE: ros:jazzy-ros-base
+      CHECK_PURPOSE: ${{ github.event_name == 'push' && 'baseline' || 'change' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -73,11 +78,11 @@ jobs:
 
       - name: Build and test ROS 2 simulation
         shell: bash
-        run: bash scripts/run-ros-checks.sh
+        run: bash scripts/run-ros-checks.sh --purpose "$CHECK_PURPOSE"
 
       - name: Verify ROS 2 evidence
         shell: bash
-        run: python3 tools/evidence.py validate "artifacts/${EVIDENCE_RUN_ID}"
+        run: python3 tools/evidence.py validate "artifacts/${EVIDENCE_RUN_ID}" --purpose "$CHECK_PURPOSE"
 
       - name: Preserve ROS 2 test evidence
         if: always()
@@ -88,4 +93,64 @@ jobs:
             artifacts/
             log/
             build/robotics_sim/test_results/robotics_sim/pytest.xml
+          if-no-files-found: warn
+
+  final-acceptance:
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    needs: [validate-template, ros2-simulation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Reject failed or skipped prerequisites
+        run: |
+          test "${{ needs.validate-template.result }}" = success
+          test "${{ needs.ros2-simulation.result }}" = success
+
+      - name: Check out tested merge
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install validation tools
+        run: python -m pip install --requirement requirements-dev.txt
+
+      - name: Download same-run offline evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: repository-check-evidence
+          path: artifacts/incoming/offline
+
+      - name: Download same-run ROS evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ros2-simulation-logs
+          path: artifacts/incoming/ros
+
+      - name: Verify final candidate, review, and execution evidence
+        run: |
+          cp -a "artifacts/incoming/offline/artifacts/offline-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" artifacts/
+          cp -a "artifacts/incoming/ros/artifacts/ros-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" artifacts/
+          mkdir -p build/unit build/robotics_sim/test_results/robotics_sim
+          cp "artifacts/incoming/offline/build/unit/test-results.json" build/unit/test-results.json
+          cp "artifacts/incoming/ros/build/robotics_sim/test_results/robotics_sim/pytest.xml" \
+            build/robotics_sim/test_results/robotics_sim/pytest.xml
+          python3 tools/final_acceptance.py --event "$GITHUB_EVENT_PATH" \
+            --offline "artifacts/offline-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --ros "artifacts/ros-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+      - name: Preserve final acceptance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-acceptance-evidence
+          path: artifacts/final-*/
           if-no-files-found: warn

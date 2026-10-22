@@ -59,3 +59,20 @@ requirements and their tests to be implemented. Neither phase proves human appro
 Generated evidence under `artifacts/` records the actual checked-out SHA, candidate PR head,
 raw logs, JUnit results, and per-test trace results. A complete link is an audit trail, not
 proof that the assertion has the intended meaning; reviewers must inspect that meaning.
+
+`contracts/workflow-requirements.json` is the small authoritative catalog for engineering
+workflow behavior. Its `REQ-WF-*` entries link validator symbols to `T-WF-*` unit nodes
+and `build/unit/test-results.json`; they do not invent robot interfaces. The candidate
+ChangeContract selects its DesignPackage, while the offline runner resolves that package's
+implemented unit tests and the catalog tests against actual unittest outcomes. The ROS
+suite always retains the `warehouse-tote` simulation safety regression. A nondefault
+project's implemented ROS checks must also link to the current JUnit; a new ROS runtime
+needs explicit reviewed runner support before it can claim runtime acceptance.
+
+`bash scripts/run-checks.sh --purpose baseline` validates a clean checkout without a
+ChangeContract. `--purpose change` requires one contract in the trusted Git range and
+never falls back to baseline. The manifest records this purpose. A skipped or absent
+unit node, zero tests, failed or erroneous case, changed policy/test input, or stale
+snapshot prevents change acceptance. This repository currently permits no skipped tests
+in an accepted run. A changed workflow catalog or validator still requires independent
+human review; a candidate-authored JSON file is not its own policy authority.

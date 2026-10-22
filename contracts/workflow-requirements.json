@@ -1,0 +1,63 @@
+{
+  "schema_version": "v1",
+  "requirements": [
+    {
+      "id": "REQ-WF-BASELINE",
+      "statement": "A clean checkout can verify its baseline without claiming a change is deliverable.",
+      "acceptance": "Baseline runs do not select a ChangeContract and cannot satisfy change acceptance.",
+      "implementation": [{"file": "tools/evidence.py", "symbol": "run_suite"}],
+      "test_ids": ["T-WF-BASELINE"]
+    },
+    {
+      "id": "REQ-WF-SCOPE",
+      "statement": "A candidate change has exactly one bounded contract selected from the trusted diff.",
+      "acceptance": "Missing or ambiguous contracts, forged bases, and paths outside scope are rejected.",
+      "implementation": [{"file": "tools/change_contracts.py", "symbol": "validate_change_contract"}],
+      "test_ids": ["T-WF-SCOPE", "T-WF-FORGED-BASE"]
+    },
+    {
+      "id": "REQ-WF-UNIT",
+      "statement": "Required offline tests must be discovered and execute successfully.",
+      "acceptance": "Zero, missing, skipped, failed, erroneous, or stale unit results cannot pass.",
+      "implementation": [{"file": "tools/evidence.py", "symbol": "validate_manifest"}],
+      "test_ids": ["T-WF-UNIT-RESULT", "T-WF-UNIT-RUNNER", "T-WF-UNIT-ZERO", "T-WF-UNIT-MANIFEST"]
+    },
+    {
+      "id": "REQ-WF-REVIEW",
+      "statement": "The final candidate review covers every changed path and closes all findings against current evidence.",
+      "acceptance": "Missing paths, unresolved findings, stale snapshots, or absent execution evidence are rejected.",
+      "implementation": [{"file": "tools/review_coverage.py", "symbol": "validate_record"}],
+      "test_ids": ["T-WF-REVIEW-PATHS", "T-WF-REVIEW-FINDINGS", "T-WF-REVIEW-EVIDENCE"]
+    },
+    {
+      "id": "REQ-WF-SELECTION",
+      "statement": "Execution evidence must identify the design selected by the candidate contract.",
+      "acceptance": "A second project runs and traces its own test node; project A evidence cannot satisfy project B.",
+      "implementation": [{"file": "tools/evidence.py", "symbol": "_selected_design"}],
+      "test_ids": ["T-WF-SELECTION", "T-WF-ROS-SELECTION"]
+    },
+    {
+      "id": "REQ-WF-DELIVERY",
+      "statement": "Final acceptance combines scope, review, required results, and tested commit identity.",
+      "acceptance": "An incomplete review, missing required test, or unrelated PR merge commit is rejected.",
+      "implementation": [{"file": "tools/final_acceptance.py", "symbol": "validate_final"}],
+      "test_ids": ["T-WF-DELIVERY-MERGE", "T-WF-DELIVERY-REVIEW"]
+    }
+  ],
+  "tests": [
+    {"id": "T-WF-BASELINE", "requirement_ids": ["REQ-WF-BASELINE"], "test_node": "tests/unit/test_evidence.py::EvidenceTests::test_baseline_and_change_purpose_are_distinct", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-SCOPE", "requirement_ids": ["REQ-WF-SCOPE"], "test_node": "tests/unit/test_change_contract.py::ChangeContractTests::test_contract_selection_rejects_missing_or_ambiguous", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-FORGED-BASE", "requirement_ids": ["REQ-WF-SCOPE"], "test_node": "tests/unit/test_change_contract.py::ChangeContractTests::test_contract_cannot_choose_a_shorter_base", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-UNIT-RESULT", "requirement_ids": ["REQ-WF-UNIT"], "test_node": "tests/unit/test_evidence.py::EvidenceTests::test_mandatory_unit_outcomes_are_bound", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-UNIT-RUNNER", "requirement_ids": ["REQ-WF-UNIT"], "test_node": "tests/unit/test_run_unit_tests.py::UnitRunnerTests::test_all_skipped_is_failure", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-UNIT-ZERO", "requirement_ids": ["REQ-WF-UNIT"], "test_node": "tests/unit/test_run_unit_tests.py::UnitRunnerTests::test_zero_tests_is_failure", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-UNIT-MANIFEST", "requirement_ids": ["REQ-WF-UNIT"], "test_node": "tests/unit/test_evidence.py::EvidenceTests::test_failed_post_run_validation_is_not_a_passing_manifest", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-REVIEW-PATHS", "requirement_ids": ["REQ-WF-REVIEW"], "test_node": "tests/unit/test_review_coverage.py::ReviewCoverageTests::test_missing_or_duplicate_file_blocks_review", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-REVIEW-FINDINGS", "requirement_ids": ["REQ-WF-REVIEW"], "test_node": "tests/unit/test_review_coverage.py::ReviewCoverageTests::test_unresolved_or_unverifiable_finding_blocks_review", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-REVIEW-EVIDENCE", "requirement_ids": ["REQ-WF-REVIEW"], "test_node": "tests/unit/test_review_coverage.py::ReviewCoverageTests::test_missing_failed_or_wrong_suite_evidence_blocks_review", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-SELECTION", "requirement_ids": ["REQ-WF-SELECTION"], "test_node": "tests/unit/test_evidence.py::EvidenceTests::test_selected_project_evidence_is_not_default", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-ROS-SELECTION", "requirement_ids": ["REQ-WF-SELECTION"], "test_node": "tests/unit/test_evidence.py::EvidenceTests::test_trace_results_use_actual_junit_status", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-DELIVERY-MERGE", "requirement_ids": ["REQ-WF-DELIVERY"], "test_node": "tests/unit/test_final_acceptance.py::FinalAcceptanceTests::test_pr_merge_relation_uses_both_parents", "evidence_artifact": "build/unit/test-results.json"},
+    {"id": "T-WF-DELIVERY-REVIEW", "requirement_ids": ["REQ-WF-DELIVERY"], "test_node": "tests/unit/test_final_acceptance.py::FinalAcceptanceTests::test_final_gate_keeps_review_and_required_test_failures", "evidence_artifact": "build/unit/test-results.json"}
+  ]
+}
