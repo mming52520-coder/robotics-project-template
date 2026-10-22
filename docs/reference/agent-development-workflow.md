@@ -19,7 +19,11 @@ Repository files constrain that Agent; they do not run a model on their own.
    and run `python3 tools/validate_change_contract.py --phase plan`.
 3. **Build:** Edit the real source and tests in an isolated task branch. Update the
    DesignPackage with actual source symbols, ROS interfaces, test nodes, and evidence
-   paths. Run the ChangeContract `--phase final` gate and the offline and Jazzy scripts.
+   paths. Run the ChangeContract `--phase final` gate and
+   `bash scripts/run-checks.sh --purpose change` plus
+   `bash scripts/run-ros-checks.sh --purpose change` on a Jazzy host. A new clean clone
+   can instead use `--purpose baseline` to test the repository without a contract;
+   baseline evidence never accepts a candidate change.
 4. **Review:** Inspect the complete changed diff, call sites, safety paths, and test
    assertions in a read-only review pass. Run `python3 tools/review_coverage.py create`
    after checks, fill every reviewed path and the current offline/ROS evidence run in
@@ -28,7 +32,9 @@ Repository files constrain that Agent; they do not run a model on their own.
    it cannot prove that a model actually read a file. Name the reviewer mode honestly:
    self, separate Agent, or OCR. An omitted or filtered path blocks a complete review.
    The inventory includes staged-only paths and both sides of renames. The check
-   runner blocks acceptance if staged bytes differ from the tested worktree.
+   runner blocks acceptance if staged bytes differ from the tested worktree. Run
+   `python3 tools/final_acceptance.py --record <record.json>` after filling the
+   review record; it checks the contract, two current evidence runs, and review together.
 5. **Resolve:** Return confirmed defects to implementation, fix within the contract,
    rerun relevant checks, and review the new final snapshot. Report any unresolved
    finding as blocked rather than quietly accepting it.
@@ -36,11 +42,24 @@ Repository files constrain that Agent; they do not run a model on their own.
    raw evidence, review findings and dispositions, and unverified risks. Remote push,
    merge, production settings, and physical trials remain separate decisions.
 
-The review record is a local, ignored artifact. Its `reviewer_mode` is a declaration,
+The local v1 review record is an ignored artifact. Its `reviewer_mode` is a declaration,
 not an identity proof or human approval. The offline and ROS manifests remain the
 source of truth for executed commands and JUnit results. A skipped, missing, failed,
 or stale result cannot satisfy the record gate. The record also checks that each
 run used the same base, head, and ChangeContract as the reviewed diff.
+
+For a PR, the `final-acceptance` CI job consumes the two artifact uploads from the
+same CI run. The PR body must contain exactly one block beginning
+`<!-- ALL_IN_CODE_REVIEW_V2` and ending `END_ALL_IN_CODE_REVIEW_V2 -->`, with the v2
+JSON review record between those lines. After the first successful prerequisite jobs,
+an absent block causes the final job to fail and upload an ignored
+`review-template.json` in its final acceptance artifact. Review the exact PR candidate
+and tested merge diff, fill `reviewed_paths` and findings, copy the JSON into the PR
+body, and let the `pull_request.edited` event rerun all three jobs. If the base or
+candidate changes, obtain a new template and review the new diff. The record omits
+generated run IDs so editing the PR body cannot create a self-referential commit.
+Passing final CI validates declared coverage and same-run execution, not reviewer
+identity or the quality of a human decision. Maintain a separate human merge decision.
 
 When purchased-device protocols arrive, open a new bounded change for the adapter and
 its tests. Reconcile the protocol with the stable ROS contract before coding and keep

@@ -61,16 +61,27 @@ ros2 topic echo /sim/odom
 
 The gate starts latched, so the reset succeeds only after the synthetic status inputs are fresh and clear. Stop the request publisher; its 0.25-second timeout makes the next gate publication zero. To inject a fault, run `ros2 param set /sim/sim_environment emergency_stop true`. Clear it with `ros2 param set /sim/sim_environment emergency_stop false`, then call `ros2 service call /sim/reset_estop std_srvs/srv/Trigger '{}'` and publish a fresh request. A restarted gate also requires reset. The same parameter interface exposes `health_ok` and `obstacle_clear`. See [simulation contract](docs/reference/ros2-simulation.md) for exact topic, timeout, fault, and evidence boundaries.
 
-Run `bash scripts/run-checks.sh` for the repository checks and, on a host with ROS 2 Jazzy,
-`bash scripts/run-ros-checks.sh` for the simulation build, graph tests, JUnit trace check,
-and test-result inspection. Both scripts write raw logs and a bound manifest under the
-ignored `artifacts/<run-id>/` directory. CI uses the same scripts and uploads their
-available results, including JUnit. See [contracts](contracts/README.md) for evidence limits.
-For a local Agent review, run `python3 tools/review_coverage.py create`, inspect every
-listed changed file, fill the generated record with the current offline and ROS evidence
-directories, and run `python3 tools/review_coverage.py validate <record.json>`. This also
-works before committing. It verifies coverage claims and evidence freshness; human review
-of core-chain changes remains a separate merge gate.
+Use three entry points from the repository root:
+
+1. **Environment:** on the supported Ubuntu 24.04/Jazzy host, install
+   `requirements-dev.txt` and check `test -f /opt/ros/jazzy/setup.bash`.
+   If Jazzy is absent, the offline check can still run; ROS acceptance is `BLOCKED`.
+2. **Clean checkout:** run `bash scripts/run-checks.sh --purpose baseline`, then
+   `bash scripts/run-ros-checks.sh --purpose baseline` when Jazzy is available.
+   Baseline evidence describes only that checkout. It is not a change delivery result.
+3. **Task branch:** tell an AGENTS.md-aware Agent the desired behavior. After it writes
+   one ChangeContract, code, and tests, run `bash scripts/run-checks.sh --purpose change`
+   and `bash scripts/run-ros-checks.sh --purpose change`. Review the full diff and use
+   `python3 tools/review_coverage.py create` to generate an ignored local review record.
+   Fill its paths, findings, and two evidence directories; validate it with
+   `python3 tools/final_acceptance.py --record RECORD.json`.
+
+Both check scripts archive commands, original logs, actual unit or JUnit results, and a
+snapshot-bound manifest in ignored `artifacts/<run-id>/`. CI uploads the available raw
+results even on failure. The PR final gate also needs a v2 review block in the PR body;
+see [Agent development workflow](docs/reference/agent-development-workflow.md).
+Passing JSON checks cannot establish reviewer identity or human approval. Core-chain
+changes still need independent human review before merge.
 
 ## Structure
 
@@ -132,8 +143,8 @@ of core-chain changes remains a separate merge gate.
 
 ```bash
 python3 -m pip install --requirement requirements-dev.txt
-bash scripts/run-checks.sh
-bash scripts/run-ros-checks.sh  # ROS 2 Jazzy host or CI container only
+bash scripts/run-checks.sh --purpose baseline
+bash scripts/run-ros-checks.sh --purpose baseline  # ROS 2 Jazzy host or CI container only
 ```
 
 The last command runs simulated ROS nodes only. OCR review is optional and read-only;

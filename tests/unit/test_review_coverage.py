@@ -13,6 +13,36 @@ from tools import review_coverage
 
 
 class ReviewCoverageTests(unittest.TestCase):
+    def test_v2_review_requires_current_injected_evidence(self) -> None:
+        context = {
+            "base_sha": "a" * 40,
+            "target_base_sha": "e" * 40,
+            "head_sha": "b" * 40,
+            "snapshot_digest": "c" * 64,
+            "change_contract_path": "changes/review/change.json",
+            "change_contract_sha256": "d" * 64,
+            "changed_paths": ["tools/evidence.py"],
+        }
+        record = {
+            "schema_version": "v2",
+            **context,
+            "reviewer_mode": "self",
+            "reviewed_paths": context["changed_paths"],
+            "skipped_paths": [],
+            "findings": [],
+        }
+        with (
+            patch.object(review_coverage, "review_context", return_value=context),
+            patch.object(review_coverage, "_evidence_errors", return_value=[]),
+        ):
+            self.assertTrue(
+                any("evidence_runs" in error for error in review_coverage.validate_record(record))
+            )
+            runs = {"offline": "artifacts/offline", "ros": "artifacts/ros"}
+            self.assertEqual(review_coverage.validate_record(record, runs), [])
+            wrong = {**record, "target_base_sha": "0" * 40}
+            self.assertTrue(review_coverage.validate_record(wrong, runs))
+
     def setUp(self) -> None:
         self.context = {
             "base_sha": "a" * 40,
@@ -23,13 +53,15 @@ class ReviewCoverageTests(unittest.TestCase):
             "changed_paths": ["src/robotics_sim/robotics_sim/core.py", "tests/unit/test_core.py"],
         }
         self.record = {
-            "schema_version": "v1", **self.context,
+            "schema_version": "v1",
+            **self.context,
             "reviewer_mode": "self",
             "reviewed_paths": self.context["changed_paths"].copy(),
             "skipped_paths": [],
             "findings": [],
             "evidence_runs": {
-                "offline": "artifacts/offline-run", "ros": "artifacts/ros-run",
+                "offline": "artifacts/offline-run",
+                "ros": "artifacts/ros-run",
             },
         }
 
@@ -69,8 +101,11 @@ class ReviewCoverageTests(unittest.TestCase):
 
     def test_unresolved_or_unverifiable_finding_blocks_review(self) -> None:
         finding = {
-            "id": "R-1", "path": "src/robotics_sim/robotics_sim/core.py",
-            "line": 5, "contract": "REQ-SIM-STOP", "trigger": "stale request",
+            "id": "R-1",
+            "path": "src/robotics_sim/robotics_sim/core.py",
+            "line": 5,
+            "contract": "REQ-SIM-STOP",
+            "trigger": "stale request",
             "status": "OPEN",
         }
         changed = copy.deepcopy(self.record)
@@ -91,16 +126,20 @@ class ReviewCoverageTests(unittest.TestCase):
             (artifacts / "offline-run").mkdir(parents=True)
             (artifacts / "offline-run/manifest.json").write_text(json.dumps({"suite": "ros"}))
             with patch.object(review_coverage, "ROOT", root):
-                self.assertTrue(any(
-                    "wrong suite" in error for error in
-                    review_coverage._evidence_errors(
-                        "offline", "artifacts/offline-run", self.context
+                self.assertTrue(
+                    any(
+                        "wrong suite" in error
+                        for error in review_coverage._evidence_errors(
+                            "offline", "artifacts/offline-run", self.context
+                        )
                     )
-                ))
-                self.assertTrue(any(
-                    "missing or NOT_RUN" in error for error in
-                    review_coverage._evidence_errors("ros", None, self.context)
-                ))
+                )
+                self.assertTrue(
+                    any(
+                        "missing or NOT_RUN" in error
+                        for error in review_coverage._evidence_errors("ros", None, self.context)
+                    )
+                )
                 (artifacts / "offline-run/manifest.json").write_text(
                     json.dumps({"suite": "offline", "status": "pass"})
                 )
@@ -120,7 +159,8 @@ class ReviewCoverageTests(unittest.TestCase):
             directory = root / "artifacts/offline-run"
             directory.mkdir(parents=True)
             manifest = {
-                "suite": "offline", "base_sha": self.context["base_sha"],
+                "suite": "offline",
+                "base_sha": self.context["base_sha"],
                 "pr_head_sha": self.context["head_sha"],
                 "change_contract_path": self.context["change_contract_path"],
                 "change_contract_sha256": self.context["change_contract_sha256"],
@@ -130,17 +170,22 @@ class ReviewCoverageTests(unittest.TestCase):
                 patch.object(review_coverage, "validate_manifest", return_value=[]),
             ):
                 for field in (
-                    "base_sha", "pr_head_sha", "change_contract_path",
+                    "base_sha",
+                    "pr_head_sha",
+                    "change_contract_path",
                     "change_contract_sha256",
                 ):
                     with self.subTest(field=field):
                         changed = {**manifest, field: "forged"}
                         (directory / "manifest.json").write_text(json.dumps(changed))
-                        self.assertTrue(any(
-                            field in error for error in review_coverage._evidence_errors(
-                                "offline", "artifacts/offline-run", self.context
+                        self.assertTrue(
+                            any(
+                                field in error
+                                for error in review_coverage._evidence_errors(
+                                    "offline", "artifacts/offline-run", self.context
+                                )
                             )
-                        ))
+                        )
 
 
 if __name__ == "__main__":

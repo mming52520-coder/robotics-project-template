@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 from tools.change_contracts import (
     changed_paths,
+    current_change_contract,
     trusted_candidate_base,
     validate_change_contract,
 )
@@ -29,7 +30,9 @@ class ChangeContractTests(unittest.TestCase):
         self.document["base_revision"] = trusted_candidate_base(ROOT)
 
     def validate_fixture(
-        self, document: dict[str, object], phase: str = "final",
+        self,
+        document: dict[str, object],
+        phase: str = "final",
         paths: set[str] | None = None,
     ) -> list[str]:
         with patch("tools.change_contracts.changed_paths", return_value=paths or set()):
@@ -64,12 +67,17 @@ class ChangeContractTests(unittest.TestCase):
 
     def test_main_push_accepts_older_pr_base_without_shortening_scope(self) -> None:
         head = subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
-            capture_output=True, text=True,
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
         ).stdout.strip()
         event = {
-            "GITHUB_EVENT_NAME": "push", "GITHUB_REF": "refs/heads/main",
-            "BASE_SHA": head, "PR_HEAD_SHA": head,
+            "GITHUB_EVENT_NAME": "push",
+            "GITHUB_REF": "refs/heads/main",
+            "BASE_SHA": head,
+            "PR_HEAD_SHA": head,
         }
         original_base = json.loads(CONTRACT.read_text(encoding="utf-8"))["base_revision"]
         with patch.dict(os.environ, event):
@@ -92,18 +100,40 @@ class ChangeContractTests(unittest.TestCase):
         self.assertTrue(self.validate_fixture(changed))
 
     def test_scope_includes_dirty_tracked_files(self) -> None:
-        with patch("tools.change_contracts._git", side_effect=[
-            "contracts/change-contract.schema.json",
-            "src/robotics_sim/core.py",
-            "tests/unit/staged_only.py",
-            "scratch/extra.py",
-        ]):
-            self.assertEqual(changed_paths("a" * 40, ROOT), {
+        with patch(
+            "tools.change_contracts._git",
+            side_effect=[
                 "contracts/change-contract.schema.json",
                 "src/robotics_sim/core.py",
                 "tests/unit/staged_only.py",
                 "scratch/extra.py",
-            })
+            ],
+        ):
+            self.assertEqual(
+                changed_paths("a" * 40, ROOT),
+                {
+                    "contracts/change-contract.schema.json",
+                    "src/robotics_sim/core.py",
+                    "tests/unit/staged_only.py",
+                    "scratch/extra.py",
+                },
+            )
+
+    def test_contract_selection_rejects_missing_or_ambiguous(self) -> None:
+        with patch("tools.change_contracts.trusted_candidate_base", return_value="a" * 40):
+            for paths in (
+                set(),
+                {
+                    "changes/first/change.json",
+                    "changes/second/change.json",
+                },
+            ):
+                with (
+                    self.subTest(paths=paths),
+                    patch("tools.change_contracts.changed_paths", return_value=paths),
+                    self.assertRaisesRegex(ValueError, "expected one changed ChangeContract"),
+                ):
+                    current_change_contract(ROOT)
 
     def test_planned_feature_can_start_but_cannot_pass_final_gate(self) -> None:
         contract = copy.deepcopy(self.document)
@@ -114,10 +144,12 @@ class ChangeContractTests(unittest.TestCase):
         self.assertIn("affected requirement REQ-PLAN-LOCALIZE is not implemented", errors)
         self.assertIn("required test T-PLAN-LOCALIZE is only planned", errors)
         contract["required_test_ids"] = ["T-PLAN-NAV"]
-        self.assertTrue(any(
-            "needs a required test link" in error
-            for error in self.validate_fixture(contract, phase="plan")
-        ))
+        self.assertTrue(
+            any(
+                "needs a required test link" in error
+                for error in self.validate_fixture(contract, phase="plan")
+            )
+        )
 
 
 if __name__ == "__main__":

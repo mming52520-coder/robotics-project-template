@@ -49,7 +49,8 @@ plan, DesignPackage, ChangeContract, or test proposal unless a concrete blocker 
    regenerate the record for the final snapshot. A filled record is a coverage claim,
    not proof of reviewer identity, review quality, or human approval.
    If staged bytes differ from the tested worktree, resolve that mismatch before
-   claiming passing evidence; the check runner blocks this state.
+   claiming passing evidence; the check runner blocks this state. Run
+   `python3 tools/final_acceptance.py --record <record.json>` for the local final gate.
 5. Deliver the changed code, test evidence, review findings and dispositions, remaining
    risks, and the exact branch or revision. Human merge and hardware decisions remain
    separate. Do not claim an independent review when only self-review ran.
@@ -80,3 +81,9 @@ working on independent parts of the task while such a decision is pending.
 ## Definition of done
 
 Work is done only when the acceptance criteria pass, evidence is recorded, risks are stated, and working memory is current.
+
+Use `--purpose baseline` with both check scripts for a clean checkout and
+`--purpose change` for a bounded task branch. A baseline result never grants change
+delivery. PR final acceptance reads a v2 review block from the PR body and two
+same-run CI artifacts; an Agent must not claim its JSON record is independent human
+approval. Do not merge a governance or safety-chain change without that human decision.
