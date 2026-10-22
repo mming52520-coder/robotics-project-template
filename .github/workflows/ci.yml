@@ -42,7 +42,7 @@ jobs:
 
       - name: Preserve repository evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: repository-check-evidence
           path: |
@@ -86,7 +86,7 @@ jobs:
 
       - name: Preserve ROS 2 test evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ros2-simulation-logs
           path: |
@@ -149,7 +149,7 @@ jobs:
 
       - name: Preserve final acceptance report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: final-acceptance-evidence
           path: artifacts/final-*/
